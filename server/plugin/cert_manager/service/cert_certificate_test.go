@@ -59,9 +59,7 @@ func TestCertCertificateService_GetCertCertificateList(t *testing.T) {
 
 	// 4. 测试缓存 (模拟 Redis)
 	// 由于 miniredis 设置复杂，这里主要验证代码逻辑是否通过编译和基本 DB 操作
-	
-	// 清理缓存逻辑测试
-	s.clearCache()
+	// 注意: clearCache 方法已移除，不再需要测试缓存清除逻辑
 }
 
 func TestCertCertificateService_NoRedis(t *testing.T) {
@@ -88,6 +86,5 @@ func TestCertCertificateService_NoRedis(t *testing.T) {
 		t.Errorf("NoRedis 查询总数错误")
 	}
 
-	// 3. Test clearCache - Should NOT panic
-	s.clearCache()
+	// 3. clearCache 方法已移除，不再测试缓存清除逻辑
 }

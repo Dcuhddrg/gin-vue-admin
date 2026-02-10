@@ -15,13 +15,13 @@
       <div class="gva-btn-list">
         <el-button type="primary" icon="plus" @click="openDialog">新增项目</el-button>
       </div>
-      <el-table :data="tableData" style="width: 100%" row-key="ID">
+      <el-table :data="tableData" class="w-full" row-key="ID">
         <el-table-column align="left" label="项目名称" prop="name" />
         <el-table-column align="left" label="项目描述" prop="desc" />
         <el-table-column align="left" label="操作" width="160">
           <template #default="scope">
-            <el-button type="primary" link icon="edit" @click="updateCategoryFunc(scope.row)">变更</el-button>
-            <el-button type="primary" link icon="delete" @click="deleteCategoryFunc(scope.row)">删除</el-button>
+            <el-button type="primary" link icon="edit" @click="updateProjectFunc(scope.row)">变更</el-button>
+            <el-button type="primary" link icon="delete" @click="deleteProjectFunc(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -60,11 +60,11 @@
 <script setup>
 import { ref } from 'vue'
 import {
-  createCertCategory,
-  deleteCertCategory,
-  updateCertCategory,
-  getCertCategoryList
-} from '../api/certCategory'
+  createProject,
+  deleteProject,
+  updateProject,
+  getProjectList
+} from '@/plugin/project_manager/api/project'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const page = ref(1)
@@ -85,7 +85,7 @@ const onSubmit = () => {
 }
 
 const getTableData = async() => {
-  const table = await getCertCategoryList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const table = await getProjectList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -117,19 +117,19 @@ const openDialog = () => {
   dialogFormVisible.value = true
 }
 
-const updateCategoryFunc = (row) => {
+const updateProjectFunc = (row) => {
   type.value = 'update'
   formData.value = { ...row }
   dialogFormVisible.value = true
 }
 
-const deleteCategoryFunc = async(row) => {
+const deleteProjectFunc = async(row) => {
   ElMessageBox.confirm('确定要删除吗?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async() => {
-    const res = await deleteCertCategory(row)
+    const res = await deleteProject(row)
     if (res.code === 0) {
       ElMessage.success('删除成功')
       getTableData()
@@ -141,13 +141,13 @@ const enterDialog = async() => {
   let res
   switch (type.value) {
     case 'create':
-      res = await createCertCategory(formData.value)
+      res = await createProject(formData.value)
       break
     case 'update':
-      res = await updateCertCategory(formData.value)
+      res = await updateProject(formData.value)
       break
     default:
-      res = await createCertCategory(formData.value)
+      res = await createProject(formData.value)
       break
   }
   if (res.code === 0) {

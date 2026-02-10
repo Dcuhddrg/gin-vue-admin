@@ -5,11 +5,9 @@ import "github.com/flipped-aurora/gin-vue-admin/server/plugin/cert_manager/servi
 var (
 	ApiGroupApp            = new(apiGroup)
 	serviceCertCertificate = service.ServiceGroupApp.CertCertificate
-	serviceCertCategory    = service.ServiceGroupApp.CertCategory
 )
 
 type apiGroup struct {
 	CertCertificate certCertificate
-	CertCategory    certCategory
 	CertAdvanced    certAdvanced
 }

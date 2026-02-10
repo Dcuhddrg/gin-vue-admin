@@ -44,3 +44,21 @@ func (s *domainAssetService) GetDomainAssetList(info request.DomainAssetSearch) 
 	err = db.Order("created_at DESC").Find(&list).Error
 	return
 }
+
+func (s *domainAssetService) GetDomainAssetsByRootDomain(rootDomain string) (assets []model.DomainAsset, err error) {
+	err = global.GVA_DB.Where("root_domain = ?", rootDomain).Find(&assets).Error
+	return
+}
+
+func (s *domainAssetService) UpdateIgnoreStatus(id uint, ignore bool) error {
+	return global.GVA_DB.Model(&model.DomainAsset{}).Where("id = ?", id).Update("is_ignored", ignore).Error
+}
+
+func (s *domainAssetService) GetDomainAssetsByIds(ids []uint) (assets []model.DomainAsset, err error) {
+	err = global.GVA_DB.Where("id IN ?", ids).Find(&assets).Error
+	return
+}
+
+func (s *domainAssetService) BatchUpdateIgnoreStatus(ids []uint, ignore bool) error {
+	return global.GVA_DB.Model(&model.DomainAsset{}).Where("id IN ?", ids).Update("is_ignored", ignore).Error
+}

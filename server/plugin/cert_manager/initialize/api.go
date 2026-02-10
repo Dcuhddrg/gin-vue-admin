@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"context"
+
 	model "github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/plugin-tool/utils"
 )
@@ -54,36 +55,6 @@ func Api(ctx context.Context) {
 			Path:        "/certCertificate/updateAllCertificates",
 			Description: "批量更新证书",
 			ApiGroup:    "证书监控",
-			Method:      "POST",
-		},
-		{
-			Path:        "/certCategory/createCertCategory",
-			Description: "创建项目",
-			ApiGroup:    "项目管理",
-			Method:      "POST",
-		},
-		{
-			Path:        "/certCategory/deleteCertCategory",
-			Description: "删除项目",
-			ApiGroup:    "项目管理",
-			Method:      "DELETE",
-		},
-		{
-			Path:        "/certCategory/updateCertCategory",
-			Description: "更新项目",
-			ApiGroup:    "项目管理",
-			Method:      "PUT",
-		},
-		{
-			Path:        "/certCategory/getCertCategoryList",
-			Description: "获取项目列表",
-			ApiGroup:    "项目管理",
-			Method:      "GET",
-		},
-		{
-			Path:        "/certCategory/batchUpdateDomainCategory",
-			Description: "批量修改项目",
-			ApiGroup:    "项目管理",
 			Method:      "POST",
 		},
 		{

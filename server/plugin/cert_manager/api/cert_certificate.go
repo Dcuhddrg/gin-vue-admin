@@ -11,6 +11,15 @@ import (
 
 type certCertificate struct{}
 
+// CreateCertCertificate 创建证书
+// @Tags     CertCertificate
+// @Summary  创建证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      model.CertCertificate  true  "证书模型"
+// @Success  200   {object}  response.Response{msg=string}  "创建成功"
+// @Router   /certCertificate/createCertCertificate [post]
 func (a *certCertificate) CreateCertCertificate(c *gin.Context) {
 	var cert model.CertCertificate
 	err := c.ShouldBindJSON(&cert)
@@ -27,6 +36,15 @@ func (a *certCertificate) CreateCertCertificate(c *gin.Context) {
 	response.OkWithMessage("创建成功", c)
 }
 
+// DeleteCertCertificate 删除证书
+// @Tags     CertCertificate
+// @Summary  删除证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    ID    query     string  true  "ID"
+// @Success  200   {object}  response.Response{msg=string}  "删除成功"
+// @Router   /certCertificate/deleteCertCertificate [delete]
 func (a *certCertificate) DeleteCertCertificate(c *gin.Context) {
 	ID := c.Query("ID")
 	err := serviceCertCertificate.DeleteCertCertificate(ID)
@@ -38,6 +56,15 @@ func (a *certCertificate) DeleteCertCertificate(c *gin.Context) {
 	response.OkWithMessage("删除成功", c)
 }
 
+// DeleteCertCertificateByIds 批量删除证书
+// @Tags     CertCertificate
+// @Summary  批量删除证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    IDs   query     []string  true  "IDs"
+// @Success  200   {object}  response.Response{msg=string}  "批量删除成功"
+// @Router   /certCertificate/deleteCertCertificateByIds [delete]
 func (a *certCertificate) DeleteCertCertificateByIds(c *gin.Context) {
 	IDs := c.QueryArray("IDs[]")
 	if err := serviceCertCertificate.DeleteCertCertificateByIds(IDs); err != nil {
@@ -48,6 +75,15 @@ func (a *certCertificate) DeleteCertCertificateByIds(c *gin.Context) {
 	response.OkWithMessage("批量删除成功", c)
 }
 
+// UpdateCertCertificate 更新证书
+// @Tags     CertCertificate
+// @Summary  更新证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      model.CertCertificate  true  "证书模型"
+// @Success  200   {object}  response.Response{msg=string}  "更新成功"
+// @Router   /certCertificate/updateCertCertificate [put]
 func (a *certCertificate) UpdateCertCertificate(c *gin.Context) {
 	var cert model.CertCertificate
 	err := c.ShouldBindJSON(&cert)
@@ -64,6 +100,15 @@ func (a *certCertificate) UpdateCertCertificate(c *gin.Context) {
 	response.OkWithMessage("更新成功", c)
 }
 
+// FindCertCertificate 用id查询证书
+// @Tags     CertCertificate
+// @Summary  用id查询证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    ID    query     string  true  "ID"
+// @Success  200   {object}  response.Response{data=model.CertCertificate,msg=string}  "查询成功"
+// @Router   /certCertificate/findCertCertificate [get]
 func (a *certCertificate) FindCertCertificate(c *gin.Context) {
 	ID := c.Query("ID")
 	reCert, err := serviceCertCertificate.GetCertCertificate(ID)
@@ -105,10 +150,21 @@ func (a *certCertificate) GetCertCertificateList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+type ProbeCertificateRequest struct {
+	Domain string `json:"domain" binding:"required"`
+}
+
+// ProbeCertificate 探测证书
+// @Tags     CertCertificate
+// @Summary  探测证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      ProbeCertificateRequest  true  "域名"
+// @Success  200   {object}  response.Response{msg=string}  "探测成功"
+// @Router   /certCertificate/probeCertificate [post]
 func (a *certCertificate) ProbeCertificate(c *gin.Context) {
-	var req struct {
-		Domain string `json:"domain" binding:"required"`
-	}
+	var req ProbeCertificateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -123,6 +179,14 @@ func (a *certCertificate) ProbeCertificate(c *gin.Context) {
 	response.OkWithMessage("探测成功", c)
 }
 
+// UpdateAllCertificates 批量更新证书
+// @Tags     CertCertificate
+// @Summary  批量更新证书
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Success  200   {object}  response.Response{msg=string}  "批量更新成功"
+// @Router   /certCertificate/updateAllCertificates [post]
 func (a *certCertificate) UpdateAllCertificates(c *gin.Context) {
 	err := serviceCertCertificate.UpdateAllCertificates()
 	if err != nil {

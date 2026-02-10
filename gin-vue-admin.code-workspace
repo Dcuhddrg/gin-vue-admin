@@ -17,7 +17,8 @@
     "go.toolsEnvVars": {
       "GOPROXY": "https://goproxy.cn,direct",
       "GONOPROXY": "none;"
-    }
+    },
+    "remote.autoForwardPortsFallback": 0
   },
   "launch": {
     "version": "0.2.0",

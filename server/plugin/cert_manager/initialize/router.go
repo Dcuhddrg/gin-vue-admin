@@ -12,6 +12,5 @@ func Router(engine *gin.Engine) {
 	private := engine.Group(global.GVA_CONFIG.System.RouterPrefix).Group("")
 	private.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
 	router.RouterGroupApp.CertCertificate.Init(public, private)
-	router.RouterGroupApp.CertCategory.Init(public, private)
 	router.RouterGroupApp.CertAdvancedRouter.InitCertAdvancedRouter(private)
 }

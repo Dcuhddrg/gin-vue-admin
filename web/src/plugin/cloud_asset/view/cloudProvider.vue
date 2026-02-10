@@ -167,7 +167,7 @@
           <el-select
             v-model="cloudProviderInfo.projectId"
             placeholder="请选择关联项目"
-            style="width: 100%"
+            class="w-full"
             filterable
           >
             <el-option
@@ -179,7 +179,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="厂商类型" prop="type">
-          <el-select v-model="cloudProviderInfo.type" placeholder="请选择厂商类型" style="width: 100%">
+          <el-select v-model="cloudProviderInfo.type" placeholder="请选择厂商类型" class="w-full">
             <el-option label="阿里云" value="aliyun" />
             <el-option label="腾讯云" value="tencent" />
             <el-option label="AWS" value="aws" />
@@ -243,7 +243,7 @@
     updateCloudProvider,
     deleteCloudProvider
   } from '@/plugin/cloud_asset/api/cloudProvider.js'
-  import { getCertCategoryList } from '@/plugin/cert_manager/api/certCategory'
+  import { getProjectList as getProjectListApi } from '@/plugin/project_manager/api/project'
   import RegionsSelector from './components/RegionsSelector.vue'
 
   import { ref, computed, watch } from 'vue'
@@ -281,7 +281,7 @@
   const projectList = ref([])
 
   const getProjectList = async () => {
-    const res = await getCertCategoryList({ page: 1, pageSize: 999 })
+    const res = await getProjectListApi({ page: 1, pageSize: 999 })
     if (res.code === 0) {
       projectList.value = res.data.list
     }

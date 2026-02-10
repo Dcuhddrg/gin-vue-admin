@@ -82,7 +82,7 @@
         </el-button>
         <el-button
           icon="delete"
-          style="margin-left: 10px"
+          class="ml-2.5"
           :disabled="!multipleSelection.length"
           @click="onDelete"
         >
@@ -91,7 +91,7 @@
       </div>
       <el-table
         ref="multipleTable"
-        style="width: 100%"
+        class="w-full"
         tooltip-effect="dark"
         :data="tableData"
         row-key="ID"
@@ -203,7 +203,7 @@
           <el-select
             v-model="formData.userID"
             placeholder="请选择作者"
-            style="width: 100%"
+            class="w-full"
             :clearable="true"
           >
             <el-option

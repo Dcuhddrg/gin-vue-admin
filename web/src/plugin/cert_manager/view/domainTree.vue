@@ -8,11 +8,11 @@
             <el-input
               v-model="rootDomain"
               placeholder="请输入根域名"
-              style="width: 200px; margin-right: 10px"
+              class="w-200px mr-2.5"
               @keyup.enter="loadDomainTree"
             />
             <el-button type="primary" @click="loadDomainTree">加载</el-button>
-            <el-checkbox v-model="deepScan" label="深度扫描" style="margin-right: 10px" />
+            <el-checkbox v-model="deepScan" label="深度扫描" class="mr-2.5" />
             <el-button type="success" @click="discoverSubdomains">发现子域名</el-button>
             <el-button type="info" @click="exportReport">导出报告</el-button>
             <el-button type="warning" @click="reProbeAll">重新探测</el-button>

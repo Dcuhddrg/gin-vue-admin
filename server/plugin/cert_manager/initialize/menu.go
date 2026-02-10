@@ -30,7 +30,7 @@ func Menu(ctx context.Context) {
 		Path:      "certCategory",
 		Name:      "certCategory",
 		Hidden:    false,
-		Component: "plugin/cert_manager/view/certCategory.vue",
+		Component: "plugin/project_manager/view/project.vue",
 		Sort:      1,
 		Meta:      model.Meta{Title: "项目管理", Icon: "files"},
 	}
@@ -46,8 +46,9 @@ func Menu(ctx context.Context) {
 
 	// 强制更新已存在的菜单标题和排序，确保重构即时生效
 	global.GVA_DB.WithContext(ctx).Model(&model.SysBaseMenu{}).Where("name = ?", "certCategory").Updates(map[string]interface{}{
-		"title": "项目管理",
-		"sort":  1,
+		"title":     "项目管理",
+		"component": "plugin/project_manager/view/project.vue",
+		"sort":      1,
 	})
 	global.GVA_DB.WithContext(ctx).Model(&model.SysBaseMenu{}).Where("name = ?", "certManager").Updates(map[string]interface{}{
 		"sort": 2,

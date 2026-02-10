@@ -8,6 +8,10 @@
     class="w-full"
   >
     <el-option
+      label="全部项目"
+      value=""
+    />
+    <el-option
       v-for="item in categories"
       :key="item.ID"
       :label="item.name"
@@ -18,7 +22,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { getCertCategoryList } from '../api/certCategory'
+import { getProjectList } from '@/plugin/project_manager/api/project'
 
 const props = defineProps({
   modelValue: {
@@ -49,17 +53,19 @@ watch(() => props.modelValue, (newVal) => {
   internalValue.value = newVal
 })
 
-// 获取分类列表
+// 获取项目列表
 const fetchCategories = async () => {
-  const res = await getCertCategoryList({ page: 1, pageSize: 999 })
+  const res = await getProjectList({ page: 1, pageSize: 999 })
   if (res.code === 0) {
     categories.value = res.data.list
-    // 如果没有选中值且开启了自动选中第一项，且分类列表不为空
+    // 如果没有选中值且开启了自动选中第一项，且项目列表不为空
     if (!internalValue.value && props.autoSelectFirst && categories.value.length > 0) {
-      const firstValue = props.multiple ? [categories.value[0].name] : categories.value[0].name
-      internalValue.value = firstValue
-      emit('update:modelValue', firstValue)
-      emit('change', firstValue)
+      if (props.autoSelectFirst) {
+        const firstValue = props.multiple ? [categories.value[0].name] : categories.value[0].name
+        internalValue.value = firstValue
+        emit('update:modelValue', firstValue)
+        emit('change', firstValue)
+      }
     }
   }
 }

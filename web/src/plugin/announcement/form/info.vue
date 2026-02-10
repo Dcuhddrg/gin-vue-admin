@@ -22,7 +22,7 @@
           <el-select
             v-model="formData.userID"
             placeholder="请选择作者"
-            style="width: 100%"
+            class="w-full"
             :clearable="true"
           >
             <el-option

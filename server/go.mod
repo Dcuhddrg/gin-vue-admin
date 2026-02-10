@@ -5,6 +5,7 @@ go 1.24.0
 toolchain go1.24.2
 
 require (
+	github.com/aliyun/alibaba-cloud-sdk-go v1.63.107
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/casbin/casbin/v2 v2.103.0
@@ -37,6 +38,8 @@ require (
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.41
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.3.41
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.60
 	github.com/unrolled/secure v1.17.0
 	github.com/xuri/excelize/v2 v2.9.0
@@ -49,6 +52,7 @@ require (
 	gorm.io/datatypes v1.2.5
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11
+	gorm.io/driver/sqlite v1.5.0
 	gorm.io/driver/sqlserver v1.5.4
 	gorm.io/gen v0.3.26
 	gorm.io/gorm v1.25.12
@@ -119,6 +123,7 @@ require (
 	github.com/magiconair/properties v1.8.9 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/microsoft/go-mssqldb v1.8.0 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minlz v1.0.0 // indirect
@@ -130,6 +135,7 @@ require (
 	github.com/mozillazg/go-httpheader v0.4.0 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nwaples/rardecode/v2 v2.1.0 // indirect
+	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // indirect
 	github.com/otiai10/mint v1.6.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect

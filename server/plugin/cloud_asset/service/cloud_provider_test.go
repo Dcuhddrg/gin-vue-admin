@@ -5,7 +5,7 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
-	certModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/cert_manager/model"
+	projectManagerModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/project_manager/model"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/cloud_asset/model"
 	cpRequest "github.com/flipped-aurora/gin-vue-admin/server/plugin/cloud_asset/model/request"
 	"gorm.io/driver/sqlite"
@@ -15,7 +15,7 @@ import (
 func setupTestDB() {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	global.GVA_DB = db
-	db.AutoMigrate(&model.CloudProvider{}, &certModel.CertCategory{})
+	db.AutoMigrate(&model.CloudProvider{}, &projectManagerModel.Project{})
 }
 
 func TestCloudProviderService(t *testing.T) {
@@ -23,7 +23,7 @@ func TestCloudProviderService(t *testing.T) {
 	s := &CloudProviderService{}
 
 	// 1. 创建关联项目
-	project := certModel.CertCategory{
+	project := projectManagerModel.Project{
 		Name: "测试项目",
 	}
 	global.GVA_DB.Create(&project)

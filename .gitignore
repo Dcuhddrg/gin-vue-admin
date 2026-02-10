@@ -41,3 +41,6 @@ web/pnpm-lock.yaml
 *.db
 *.sqlite
 *.sqlite3
+
+# skills
+/.trae/skills/

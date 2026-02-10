@@ -8,4 +8,5 @@ import (
 func Router(engine *gin.Engine) {
 	group := engine.Group("")
 	router.RouterGroupApp.InitCloudProviderRouter(group)
+	router.RouterGroupApp.InitCloudInstanceRouter(group)
 }

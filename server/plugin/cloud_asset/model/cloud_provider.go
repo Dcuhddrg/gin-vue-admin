@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	certManagerModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/cert_manager/model"
+	projectManagerModel "github.com/flipped-aurora/gin-vue-admin/server/plugin/project_manager/model"
 )
 
 type CloudProvider struct {
@@ -14,7 +14,7 @@ type CloudProvider struct {
 	Status    *int                         `json:"status" gorm:"column:status;comment:状态:1启用,2禁用;default:1"`
 	Remark    string                       `json:"remark" gorm:"column:remark;comment:备注"`
 	ProjectID uint                         `json:"projectId" gorm:"column:project_id;comment:关联项目ID"`
-	Project   certManagerModel.CertCategory `json:"project" gorm:"foreignKey:ProjectID"`
+	Project   projectManagerModel.Project `json:"project" gorm:"foreignKey:ProjectID"`
 }
 
 func (CloudProvider) TableName() string {

@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/flipped-aurora/gin-vue-admin/server/plugin/cert_manager/model"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/cert_manager/model/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/cert_manager/service"
 	"github.com/gin-gonic/gin"
@@ -39,64 +39,102 @@ type IgnoreDomainRequest struct {
 	Ignore   bool `json:"ignore"`
 }
 
+// DiscoverSubdomains 子域名发现
+// @Tags     CertAdvanced
+// @Summary  子域名发现
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      DiscoverSubdomainsRequest  true  "发现参数"
+// @Success  200   {object}  response.Response{msg=string}  "子域名发现成功"
+// @Router   /certAdvanced/discoverSubdomains [post]
 func (a *certAdvanced) DiscoverSubdomains(c *gin.Context) {
 	var req DiscoverSubdomainsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
 	if err := service.ServiceGroupApp.SubdomainDiscovery.DiscoverAndStoreSubdomains(req.RootDomain, req.Category, req.DeepScan); err != nil {
 		global.GVA_LOG.Error("子域名发现失败", zap.Error(err))
+		response.FailWithMessage("子域名发现失败", c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "msg": "子域名发现成功"})
+	response.OkWithMessage("子域名发现成功", c)
 }
 
+// BatchDiscoverSubdomains 批量子域名发现
+// @Tags     CertAdvanced
+// @Summary  批量子域名发现
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      BatchDiscoverRequest  true  "批量发现参数"
+// @Success  200   {object}  response.Response{msg=string}  "批量子域名发现成功"
+// @Router   /certAdvanced/batchDiscoverSubdomains [post]
 func (a *certAdvanced) BatchDiscoverSubdomains(c *gin.Context) {
 	var req BatchDiscoverRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
 	if err := service.ServiceGroupApp.SubdomainDiscovery.BatchDiscoverSubdomains(req.RootDomains, req.Category, req.DeepScan); err != nil {
 		global.GVA_LOG.Error("批量子域名发现失败", zap.Error(err))
+		response.FailWithMessage("批量子域名发现失败", c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "msg": "批量子域名发现成功"})
+	response.OkWithMessage("批量子域名发现成功", c)
 }
 
+// GetDomainTree 获取域名树
+// @Tags     CertAdvanced
+// @Summary  获取域名树
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    rootDomain  query     string  true  "根域名"
+// @Success  200         {object}  response.Response{data=map[string]interface{},msg=string}  "获取成功"
+// @Router   /certAdvanced/getDomainTree [get]
 func (a *certAdvanced) GetDomainTree(c *gin.Context) {
 	rootDomain := c.Query("rootDomain")
 	if rootDomain == "" {
-		c.JSON(400, gin.H{"code": 400, "msg": "rootDomain 参数必填"})
+		response.FailWithMessage("rootDomain 参数必填", c)
 		return
 	}
 
 	tree, err := service.ServiceGroupApp.SubdomainDiscovery.GetDomainTree(rootDomain)
 	if err != nil {
 		global.GVA_LOG.Error("获取域名树失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "获取域名树失败"})
+		response.FailWithMessage("获取域名树失败", c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "data": tree})
+	response.OkWithData(tree, c)
 }
 
+// ExportSubdomainReport 导出子域名报告
+// @Tags     CertAdvanced
+// @Summary  导出子域名报告
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/octet-stream
+// @Param    rootDomain  query     string  true  "根域名"
+// @Success  200         {file}    file    "文件流"
+// @Router   /certAdvanced/exportSubdomainReport [get]
 func (a *certAdvanced) ExportSubdomainReport(c *gin.Context) {
 	rootDomain := c.Query("rootDomain")
 	if rootDomain == "" {
-		c.JSON(400, gin.H{"code": 400, "msg": "rootDomain 参数必填"})
+		response.FailWithMessage("rootDomain 参数必填", c)
 		return
 	}
 
 	filePath, fileName, err := service.ServiceGroupApp.SubdomainDiscovery.ExportSubdomainReport(rootDomain)
 	if err != nil {
 		global.GVA_LOG.Error("导出报告失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "导出报告失败"})
+		response.FailWithMessage("导出报告失败", c)
 		return
 	}
 	defer os.Remove(filePath)
@@ -107,17 +145,26 @@ func (a *certAdvanced) ExportSubdomainReport(c *gin.Context) {
 	c.File(filePath)
 }
 
+// ReProbeDomainTree 重新探测域名树
+// @Tags     CertAdvanced
+// @Summary  重新探测域名树
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      ReProbeRequest  true  "探测参数"
+// @Success  200   {object}  response.Response{msg=string}  "重新探测成功"
+// @Router   /certAdvanced/reProbeDomainTree [post]
 func (a *certAdvanced) ReProbeDomainTree(c *gin.Context) {
 	var req ReProbeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
-	var assets []model.DomainAsset
-	if err := global.GVA_DB.Where("root_domain = ?", req.RootDomain).Find(&assets).Error; err != nil {
+	assets, err := service.ServiceGroupApp.DomainAssetService.GetDomainAssetsByRootDomain(req.RootDomain)
+	if err != nil {
 		global.GVA_LOG.Error("查询域名资产失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "查询域名资产失败"})
+		response.FailWithMessage("查询域名资产失败", c)
 		return
 	}
 
@@ -130,63 +177,94 @@ func (a *certAdvanced) ReProbeDomainTree(c *gin.Context) {
 		}
 	}
 
-	c.JSON(200, gin.H{"code": 0, "msg": "重新探测成功"})
+	response.OkWithMessage("重新探测成功", c)
 }
 
+// IgnoreDomain 忽略/取消忽略域名
+// @Tags     CertAdvanced
+// @Summary  忽略/取消忽略域名
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      IgnoreDomainRequest  true  "忽略参数"
+// @Success  200   {object}  response.Response{msg=string}  "更新成功"
+// @Router   /certAdvanced/ignoreDomain [post]
 func (a *certAdvanced) IgnoreDomain(c *gin.Context) {
 	var req IgnoreDomainRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
-	if err := global.GVA_DB.Model(&model.DomainAsset{}).Where("id = ?", req.DomainID).Update("is_ignored", req.Ignore).Error; err != nil {
+	if err := service.ServiceGroupApp.DomainAssetService.UpdateIgnoreStatus(req.DomainID, req.Ignore); err != nil {
 		global.GVA_LOG.Error("更新忽略状态失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "更新忽略状态失败"})
+		response.FailWithMessage("更新忽略状态失败", c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "msg": "更新成功"})
+	response.OkWithMessage("更新成功", c)
 }
 
+// GetDomainAssetList 获取域名资产列表
+// @Tags     CertAdvanced
+// @Summary  获取域名资产列表
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  query     request.DomainAssetSearch  true  "搜索条件"
+// @Success  200   {object}  response.Response{data=response.PageResult,msg=string}  "获取成功"
+// @Router   /certAdvanced/getDomainAssetList [get]
 func (a *certAdvanced) GetDomainAssetList(c *gin.Context) {
 	var pageInfo request.DomainAssetSearch
 	if err := c.ShouldBindQuery(&pageInfo); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
 	list, total, err := service.ServiceGroupApp.DomainAssetService.GetDomainAssetList(pageInfo)
 	if err != nil {
 		global.GVA_LOG.Error("获取域名资产列表失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "获取域名资产列表失败"})
+		response.FailWithMessage("获取域名资产列表失败", c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "data": gin.H{"list": list, "total": total}})
+	response.OkWithDetailed(response.PageResult{
+		List:     list,
+		Total:    total,
+		Page:     pageInfo.Page,
+		PageSize: pageInfo.PageSize,
+	}, "获取成功", c)
 }
 
 type BatchIdsRequest struct {
 	IDs []uint `json:"ids" binding:"required"`
 }
 
+// BatchReprobe 批量重新探测
+// @Tags     CertAdvanced
+// @Summary  批量重新探测
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      BatchIdsRequest  true  "IDs"
+// @Success  200   {object}  response.Response{msg=string}  "批量探测完成"
+// @Router   /certAdvanced/batchReprobe [post]
 func (a *certAdvanced) BatchReprobe(c *gin.Context) {
 	var req BatchIdsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
-		c.JSON(400, gin.H{"code": 400, "msg": "参数格式错误"})
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
-	var assets []model.DomainAsset
-	if err := global.GVA_DB.Where("id IN ?", req.IDs).Find(&assets).Error; err != nil {
+	assets, err := service.ServiceGroupApp.DomainAssetService.GetDomainAssetsByIds(req.IDs)
+	if err != nil {
 		global.GVA_LOG.Error("查询域名记录失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "查询失败"})
+		response.FailWithMessage("查询失败", c)
 		return
 	}
 
 	if len(assets) == 0 {
-		c.JSON(200, gin.H{"code": 0, "msg": "无匹配记录"})
+		response.OkWithMessage("无匹配记录", c)
 		return
 	}
 
@@ -213,31 +291,34 @@ func (a *certAdvanced) BatchReprobe(c *gin.Context) {
 	}
 
 	if len(errMsgs) > 0 {
-		c.JSON(200, gin.H{
-			"code": 7, // 业务逻辑层面的部分失败
-			"msg":  fmt.Sprintf("部分探测失败: %s", strings.Join(errMsgs, "; ")),
-		})
+		response.OkWithMessage(fmt.Sprintf("部分探测失败: %s", strings.Join(errMsgs, "; ")), c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "msg": "批量探测完成"})
+	response.OkWithMessage("批量探测完成", c)
 }
 
+// BatchIgnore 批量忽略
+// @Tags     CertAdvanced
+// @Summary  批量忽略
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data  body      BatchIdsRequest  true  "IDs"
+// @Success  200   {object}  response.Response{msg=string}  "批量忽略成功"
+// @Router   /certAdvanced/batchIgnore [post]
 func (a *certAdvanced) BatchIgnore(c *gin.Context) {
 	var req BatchIdsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		global.GVA_LOG.Error("参数绑定失败", zap.Error(err))
+		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
-	// 这里的忽略逻辑如果是针对 DomainAsset 的，需要查询 DomainAsset
-	// 如果是针对 CertCertificate 的，可能需要一个新的字段。
-	// 目前我们假设是针对 DomainAsset 的
-	if err := global.GVA_DB.Model(&model.DomainAsset{}).Where("id IN ?", req.IDs).Update("is_ignored", true).Error; err != nil {
+	if err := service.ServiceGroupApp.DomainAssetService.BatchUpdateIgnoreStatus(req.IDs, true); err != nil {
 		global.GVA_LOG.Error("批量忽略失败", zap.Error(err))
-		c.JSON(500, gin.H{"code": 500, "msg": "操作失败"})
+		response.FailWithMessage("操作失败", c)
 		return
 	}
 
-	c.JSON(200, gin.H{"code": 0, "msg": "批量忽略成功"})
+	response.OkWithMessage("批量忽略成功", c)
 }

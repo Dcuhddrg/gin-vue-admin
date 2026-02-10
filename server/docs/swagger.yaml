@@ -1,4 +1,60 @@
 definitions:
+  api.BatchDiscoverRequest:
+    properties:
+      category:
+        type: string
+      deepScan:
+        type: boolean
+      rootDomains:
+        items:
+          type: string
+        type: array
+    required:
+    - rootDomains
+    type: object
+  api.BatchIdsRequest:
+    properties:
+      ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - ids
+    type: object
+  api.DiscoverSubdomainsRequest:
+    properties:
+      category:
+        type: string
+      deepScan:
+        type: boolean
+      rootDomain:
+        type: string
+    required:
+    - rootDomain
+    type: object
+  api.IgnoreDomainRequest:
+    properties:
+      domainId:
+        type: integer
+      ignore:
+        type: boolean
+    required:
+    - domainId
+    type: object
+  api.ProbeCertificateRequest:
+    properties:
+      domain:
+        type: string
+    required:
+    - domain
+    type: object
+  api.ReProbeRequest:
+    properties:
+      rootDomain:
+        type: string
+    required:
+    - rootDomain
+    type: object
   common.JSONMap:
     additionalProperties: true
     type: object
@@ -85,7 +141,7 @@ definitions:
         description: 验证码长度
         type: integer
       open-captcha:
-        description: 防爆破验证码开启此数，0代表每次登录都需要验证码，其他数字代表错误密码此数，如3代表错误三次后出现验证码
+        description: 防爆破验证码开启此数，0代表每次登录都需要验证码，其他数字代表错误密码次数，如3代表错误三次后出现验证码
         type: integer
       open-captcha-timeout:
         description: 防爆破验证码超时时间，单位：s(秒)
@@ -151,6 +207,30 @@ definitions:
         type: string
       store-path:
         description: 本地文件存储路径
+        type: string
+    type: object
+  config.MCP:
+    properties:
+      addr:
+        description: 独立MCP服务端口
+        type: integer
+      message_path:
+        description: 消息路径
+        type: string
+      name:
+        description: MCP名称
+        type: string
+      separate:
+        description: 是否独立运行MCP服务
+        type: boolean
+      sse_path:
+        description: SSE路径
+        type: string
+      url_prefix:
+        description: URL前缀
+        type: string
+      version:
+        description: MCP版本
         type: string
     type: object
   config.Minio:
@@ -477,6 +557,10 @@ definitions:
         allOf:
         - $ref: '#/definitions/config.Local'
         description: oss
+      mcp:
+        allOf:
+        - $ref: '#/definitions/config.MCP'
+        description: MCP配置
       minio:
         $ref: '#/definitions/config.Minio'
       mongo:
@@ -608,6 +692,9 @@ definitions:
       db-type:
         description: 数据库类型:mysql(默认)|sqlite|sqlserver|postgresql
         type: string
+      disable-auto-migrate:
+        description: 自动迁移数据库表结构，生产环境建议设为false，手动迁移
+        type: boolean
       iplimit-count:
         type: integer
       iplimit-time:
@@ -802,6 +889,9 @@ definitions:
       host:
         description: 服务器地址 例如 smtp.qq.com  请前往QQ或者你要发邮件的邮箱查看其smtp协议
         type: string
+      is-loginauth:
+        description: 是否LoginAuth   是否使用LoginAuth认证方式（适用于IBM、微软邮箱服务器等）
+        type: boolean
       is-ssl:
         description: 是否SSL   是否开启SSL
         type: boolean
@@ -816,6 +906,128 @@ definitions:
         type: string
       to:
         description: 收件人:多个以英文逗号分隔 例：a@qq.com b@qq.com 正式开发中请把此项目作为参数使用
+        type: string
+    type: object
+  model.CertCategory:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      desc:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+    type: object
+  model.CertCertificate:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      brand:
+        type: string
+      category:
+        type: string
+      certId:
+        type: integer
+      certStatus:
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      domain:
+        type: string
+      domainExpireAt:
+        type: string
+      domainStartAt:
+        type: string
+      domainStatus:
+        type: integer
+      errorLog:
+        type: string
+      expireAt:
+        type: string
+      parentId:
+        type: integer
+      startAt:
+        type: string
+      tlsVersion:
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+    type: object
+  model.CloudProvider:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      ak:
+        type: string
+      createdAt:
+        description: 创建时间
+        type: string
+      project:
+        $ref: '#/definitions/model.CertCategory'
+      projectId:
+        type: integer
+      region:
+        type: string
+      remark:
+        type: string
+      sk:
+        type: string
+      status:
+        type: integer
+      type:
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+    type: object
+  model.DomainAsset:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      category:
+        type: string
+      certId:
+        type: integer
+      certStatus:
+        type: integer
+      certType:
+        type: string
+      children:
+        items:
+          $ref: '#/definitions/model.DomainAsset'
+        type: array
+      createdAt:
+        description: 创建时间
+        type: string
+      domain:
+        type: string
+      domainStatus:
+        type: integer
+      ip:
+        type: string
+      isIgnored:
+        type: boolean
+      lastProbedAt:
+        type: string
+      parentId:
+        type: integer
+      rootDomain:
+        type: string
+      source:
+        type: string
+      updatedAt:
+        description: 更新时间
         type: string
     type: object
   model.Info:
@@ -843,6 +1055,13 @@ definitions:
       userID:
         description: 作者
         type: integer
+    type: object
+  model.RegionVO:
+    properties:
+      localName:
+        type: string
+      regionId:
+        type: string
     type: object
   request.AddMenuAuthorityInfo:
     properties:
@@ -1014,6 +1233,58 @@ definitions:
         description: 是否前端表格列
         type: boolean
     type: object
+  request.AutoMcpTool:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      params:
+        items:
+          properties:
+            default:
+              type: string
+            description:
+              type: string
+            name:
+              type: string
+            required:
+              type: boolean
+            type:
+              description: string, number, boolean, object, array
+              type: string
+          required:
+          - description
+          - name
+          - type
+          type: object
+        type: array
+      response:
+        items:
+          properties:
+            type:
+              description: text, image
+              type: string
+          required:
+          - type
+          type: object
+        type: array
+    required:
+    - description
+    - name
+    type: object
+  request.BatchUpdateCategory:
+    properties:
+      category:
+        type: string
+      ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - category
+    - ids
+    type: object
   request.CasbinInReceive:
     properties:
       authorityId:
@@ -1074,6 +1345,36 @@ definitions:
         description: 每页大小
         type: integer
     type: object
+  request.ExportVersionRequest:
+    properties:
+      apiIds:
+        description: 选中的API ID列表
+        items:
+          type: integer
+        type: array
+      description:
+        description: 版本描述
+        type: string
+      dictIds:
+        description: 选中的字典ID列表
+        items:
+          type: integer
+        type: array
+      menuIds:
+        description: 选中的菜单ID列表
+        items:
+          type: integer
+        type: array
+      versionCode:
+        description: 版本号
+        type: string
+      versionName:
+        description: 版本名称
+        type: string
+    required:
+    - versionCode
+    - versionName
+    type: object
   request.GetAuthorityId:
     properties:
       authorityId:
@@ -1085,6 +1386,23 @@ definitions:
       id:
         description: 主键ID
         type: integer
+    type: object
+  request.GetRegionsReq:
+    properties:
+      accessKey:
+        type: string
+      provider:
+        enum:
+        - aliyun
+        - tencent
+        - aws
+        type: string
+      secretKey:
+        type: string
+    required:
+    - accessKey
+    - provider
+    - secretKey
     type: object
   request.GetUserList:
     properties:
@@ -1112,6 +1430,38 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  request.ImportSysDictionaryRequest:
+    properties:
+      json:
+        description: JSON字符串
+        type: string
+    required:
+    - json
+    type: object
+  request.ImportVersionRequest:
+    properties:
+      apis:
+        description: API数据，直接复用SysApi
+        items:
+          $ref: '#/definitions/system.SysApi'
+        type: array
+      dictionaries:
+        description: 字典数据，直接复用SysDictionary
+        items:
+          $ref: '#/definitions/system.SysDictionary'
+        type: array
+      menus:
+        description: 菜单数据，直接复用SysBaseMenu
+        items:
+          $ref: '#/definitions/system.SysBaseMenu'
+        type: array
+      version:
+        allOf:
+        - $ref: '#/definitions/request.VersionInfo'
+        description: 版本信息
+    required:
+    - version
     type: object
   request.InitDB:
     properties:
@@ -1297,6 +1647,24 @@ definitions:
       id:
         description: 主键ID
         type: integer
+    type: object
+  request.VersionInfo:
+    properties:
+      code:
+        description: 版本号
+        type: string
+      description:
+        description: 版本描述
+        type: string
+      exportTime:
+        description: 导出时间
+        type: string
+      name:
+        description: 版本名称
+        type: string
+    required:
+    - code
+    - name
     type: object
   response.Email:
     properties:
@@ -1495,6 +1863,9 @@ definitions:
       title:
         description: 菜单名
         type: string
+      transitionType:
+        description: 路由切换动画
+        type: string
     type: object
   system.SysApi:
     properties:
@@ -1651,6 +2022,11 @@ definitions:
       ID:
         description: 主键ID
         type: integer
+      children:
+        description: 子字典
+        items:
+          $ref: '#/definitions/system.SysDictionary'
+        type: array
       createdAt:
         description: 创建时间
         type: string
@@ -1660,6 +2036,9 @@ definitions:
       name:
         description: 字典名（中）
         type: string
+      parentID:
+        description: 父级字典ID
+        type: integer
       status:
         description: 状态
         type: boolean
@@ -1679,14 +2058,31 @@ definitions:
       ID:
         description: 主键ID
         type: integer
+      children:
+        description: 子字典详情
+        items:
+          $ref: '#/definitions/system.SysDictionaryDetail'
+        type: array
       createdAt:
         description: 创建时间
         type: string
+      disabled:
+        description: 禁用状态，根据status字段动态计算
+        type: boolean
       extend:
         description: 扩展值
         type: string
       label:
         description: 展示值
+        type: string
+      level:
+        description: 层级深度，从0开始
+        type: integer
+      parentID:
+        description: 父级字典详情ID
+        type: integer
+      path:
+        description: 层级路径，如 "1,2,3"
         type: string
       sort:
         description: 排序标记
@@ -1704,6 +2100,34 @@ definitions:
         description: 字典值
         type: string
     type: object
+  system.SysError:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      form:
+        description: 错误来源
+        type: string
+      info:
+        description: 错误内容
+        type: string
+      level:
+        type: string
+      solution:
+        description: 解决方案
+        type: string
+      status:
+        description: 处理状态：未处理/处理中/处理完成
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+    required:
+    - form
+    type: object
   system.SysExportTemplate:
     properties:
       ID:
@@ -1719,6 +2143,9 @@ definitions:
       dbName:
         description: 数据库名称
         type: string
+      importSql:
+        description: 自定义导入SQL
+        type: string
       joinTemplate:
         items:
           $ref: '#/definitions/system.JoinTemplate'
@@ -1729,6 +2156,9 @@ definitions:
         description: 模板名称
         type: string
       order:
+        type: string
+      sql:
+        description: 自定义导出SQL
         type: string
       tableName:
         description: 表名称
@@ -1920,6 +2350,33 @@ definitions:
         description: 用户UUID
         type: string
     type: object
+  system.SysVersion:
+    properties:
+      ID:
+        description: 主键ID
+        type: integer
+      createdAt:
+        description: 创建时间
+        type: string
+      description:
+        description: 版本描述
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+      versionCode:
+        description: 版本号
+        type: string
+      versionData:
+        description: 版本数据
+        type: string
+      versionName:
+        description: 版本名称
+        type: string
+    required:
+    - versionCode
+    - versionName
+    type: object
   system.System:
     properties:
       config:
@@ -1929,7 +2386,7 @@ info:
   contact: {}
   description: 使用gin+vue进行极速开发的全栈开发基础平台
   title: Gin-Vue-Admin Swagger API接口文档
-  version: v2.7.9-beta
+  version: v2.8.8
 paths:
   /api/createApi:
     post:
@@ -2891,6 +3348,30 @@ paths:
       summary: 打包插件
       tags:
       - AutoCodePlugin
+  /autoCode/initDictionary:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 打包插件成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 打包插件
+      tags:
+      - AutoCodePlugin
   /autoCode/initMenu:
     post:
       consumes:
@@ -2935,8 +3416,7 @@ paths:
             - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  items:
-                    type: object
+                  items: {}
                   type: array
                 msg:
                   type: string
@@ -2946,6 +3426,75 @@ paths:
       summary: 安装插件
       tags:
       - AutoCodePlugin
+  /autoCode/mcp:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建自动代码
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AutoMcpTool'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"success":true,"data":{},"msg":"创建成功"}'
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 自动McpTool
+      tags:
+      - mcp
+  /autoCode/mcpList:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建自动代码
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.AutoMcpTool'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"success":true,"data":{},"msg":"创建成功"}'
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: 自动McpTool
+      tags:
+      - mcp
+  /autoCode/mcpTest:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 调用MCP Tool的参数
+        in: body
+        name: data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"success":true,"data":{},"msg":"测试成功"}'
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 测试McpTool
+      tags:
+      - mcp
   /autoCode/preview:
     post:
       consumes:
@@ -3142,6 +3691,957 @@ paths:
       summary: 获取权限列表
       tags:
       - Casbin
+  /certAdvanced/batchDiscoverSubdomains:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 批量发现参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.BatchDiscoverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量子域名发现成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量子域名发现
+      tags:
+      - CertAdvanced
+  /certAdvanced/batchIgnore:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: IDs
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.BatchIdsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量忽略成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量忽略
+      tags:
+      - CertAdvanced
+  /certAdvanced/batchReprobe:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: IDs
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.BatchIdsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量探测完成
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量重新探测
+      tags:
+      - CertAdvanced
+  /certAdvanced/discoverSubdomains:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 发现参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.DiscoverSubdomainsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 子域名发现成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 子域名发现
+      tags:
+      - CertAdvanced
+  /certAdvanced/exportSubdomainReport:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 根域名
+        in: query
+        name: rootDomain
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件流
+          schema:
+            type: file
+      security:
+      - ApiKeyAuth: []
+      summary: 导出子域名报告
+      tags:
+      - CertAdvanced
+  /certAdvanced/getDomainAssetList:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 主键ID
+        in: query
+        name: ID
+        type: integer
+      - in: query
+        name: category
+        type: string
+      - in: query
+        name: certId
+        type: integer
+      - in: query
+        name: certStatus
+        type: integer
+      - in: query
+        name: certType
+        type: string
+      - description: 创建时间
+        in: query
+        name: createdAt
+        type: string
+      - in: query
+        name: domain
+        type: string
+      - in: query
+        name: domainStatus
+        type: integer
+      - in: query
+        name: ip
+        type: string
+      - in: query
+        name: isIgnored
+        type: boolean
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: lastProbedAt
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: rootDomain
+        type: string
+      - in: query
+        name: source
+        type: string
+      - description: 更新时间
+        in: query
+        name: updatedAt
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取域名资产列表
+      tags:
+      - CertAdvanced
+  /certAdvanced/getDomainTree:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 根域名
+        in: query
+        name: rootDomain
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取域名树
+      tags:
+      - CertAdvanced
+  /certAdvanced/ignoreDomain:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 忽略参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.IgnoreDomainRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 忽略/取消忽略域名
+      tags:
+      - CertAdvanced
+  /certAdvanced/reProbeDomainTree:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 探测参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.ReProbeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 重新探测成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 重新探测域名树
+      tags:
+      - CertAdvanced
+  /certCategory/batchUpdateCertCategory:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 批量修改参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.BatchUpdateCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量修改成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量修改项目
+      tags:
+      - CertCategory
+  /certCategory/createCertCategory:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 项目模型
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CertCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建项目
+      tags:
+      - CertCategory
+  /certCategory/deleteCertCategory:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 项目模型
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CertCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除项目
+      tags:
+      - CertCategory
+  /certCategory/getCertCategoryList:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - in: query
+        name: name
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取项目列表
+      tags:
+      - CertCategory
+  /certCategory/updateCertCategory:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 项目模型
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CertCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新项目
+      tags:
+      - CertCategory
+  /certCertificate/createCertCertificate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 证书模型
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CertCertificate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建证书
+      tags:
+      - CertCertificate
+  /certCertificate/deleteCertCertificate:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: query
+        name: ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除证书
+      tags:
+      - CertCertificate
+  /certCertificate/deleteCertCertificateByIds:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - collectionFormat: csv
+        description: IDs
+        in: query
+        items:
+          type: string
+        name: IDs
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除证书
+      tags:
+      - CertCertificate
+  /certCertificate/findCertCertificate:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: query
+        name: ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.CertCertificate'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 用id查询证书
+      tags:
+      - CertCertificate
+  /certCertificate/getCertCertificateList:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 主键ID
+        in: query
+        name: ID
+        type: integer
+      - in: query
+        name: brand
+        type: string
+      - in: query
+        name: category
+        type: string
+      - in: query
+        name: certId
+        type: integer
+      - in: query
+        name: certStatus
+        type: integer
+      - description: 创建时间
+        in: query
+        name: createdAt
+        type: string
+      - in: query
+        name: domain
+        type: string
+      - in: query
+        name: domainExpireAt
+        type: string
+      - in: query
+        name: domainStartAt
+        type: string
+      - in: query
+        name: domainStatus
+        type: integer
+      - in: query
+        name: errorLog
+        type: string
+      - in: query
+        name: expireAt
+        type: string
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: startAt
+        type: string
+      - in: query
+        name: tlsVersion
+        type: string
+      - description: 更新时间
+        in: query
+        name: updatedAt
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取证书列表
+      tags:
+      - CertCertificate
+  /certCertificate/probeCertificate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 域名
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/api.ProbeCertificateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 探测成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 探测证书
+      tags:
+      - CertCertificate
+  /certCertificate/updateAllCertificates:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量更新证书
+      tags:
+      - CertCertificate
+  /certCertificate/updateCertCertificate:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 证书模型
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CertCertificate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新证书
+      tags:
+      - CertCertificate
+  /cloudProvider/createCloudProvider:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建云厂商
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CloudProvider'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建云厂商
+      tags:
+      - CloudProvider
+  /cloudProvider/deleteCloudProvider:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 删除云厂商
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CloudProvider'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除云厂商
+      tags:
+      - CloudProvider
+  /cloudProvider/findCloudProvider:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 主键ID
+        in: query
+        name: ID
+        type: integer
+      - in: query
+        name: ak
+        type: string
+      - description: 创建时间
+        in: query
+        name: createdAt
+        type: string
+      - in: query
+        name: projectId
+        type: integer
+      - in: query
+        name: region
+        type: string
+      - in: query
+        name: remark
+        type: string
+      - in: query
+        name: sk
+        type: string
+      - in: query
+        name: status
+        type: integer
+      - in: query
+        name: type
+        type: string
+      - description: 更新时间
+        in: query
+        name: updatedAt
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.CloudProvider'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 用id查询云厂商
+      tags:
+      - CloudProvider
+  /cloudProvider/getCloudProviderList:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: projectId
+        type: integer
+      - in: query
+        name: status
+        type: integer
+      - in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取云厂商列表
+      tags:
+      - CloudProvider
+  /cloudProvider/getRegions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 获取可用区参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.GetRegionsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.RegionVO'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取云厂商可用区
+      tags:
+      - CloudProvider
+  /cloudProvider/updateCloudProvider:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 更新云厂商
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.CloudProvider'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新云厂商
+      tags:
+      - CloudProvider
   /customer/customer:
     delete:
       consumes:
@@ -4204,6 +5704,63 @@ paths:
       summary: 删除SysDictionary
       tags:
       - SysDictionary
+  /sysDictionary/exportSysDictionary:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 主键ID
+        in: query
+        name: ID
+        type: integer
+      - description: 创建时间
+        in: query
+        name: createdAt
+        type: string
+      - description: 描述
+        in: query
+        name: desc
+        type: string
+      - description: 字典名（中）
+        in: query
+        name: name
+        type: string
+      - description: 父级字典ID
+        in: query
+        name: parentID
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: boolean
+      - description: 字典名（英）
+        in: query
+        name: type
+        type: string
+      - description: 更新时间
+        in: query
+        name: updatedAt
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 导出字典JSON
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 导出字典JSON（包含字典详情）
+      tags:
+      - SysDictionary
   /sysDictionary/findSysDictionary:
     get:
       consumes:
@@ -4225,6 +5782,10 @@ paths:
         in: query
         name: name
         type: string
+      - description: 父级字典ID
+        in: query
+        name: parentID
+        type: integer
       - description: 状态
         in: query
         name: status
@@ -4261,6 +5822,11 @@ paths:
     get:
       consumes:
       - application/json
+      parameters:
+      - description: 字典名（中）
+        in: query
+        name: name
+        type: string
       produces:
       - application/json
       responses:
@@ -4278,6 +5844,34 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: 分页获取SysDictionary列表
+      tags:
+      - SysDictionary
+  /sysDictionary/importSysDictionary:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典JSON数据
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ImportSysDictionaryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 导入字典
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 导入字典JSON（包含字典详情）
       tags:
       - SysDictionary
   /sysDictionary/updateSysDictionary:
@@ -4377,6 +5971,10 @@ paths:
         in: query
         name: createdAt
         type: string
+      - description: 禁用状态，根据status字段动态计算
+        in: query
+        name: disabled
+        type: boolean
       - description: 扩展值
         in: query
         name: extend
@@ -4384,6 +5982,18 @@ paths:
       - description: 展示值
         in: query
         name: label
+        type: string
+      - description: 层级深度，从0开始
+        in: query
+        name: level
+        type: integer
+      - description: 父级字典详情ID
+        in: query
+        name: parentID
+        type: integer
+      - description: 层级路径，如 "1,2,3"
+        in: query
+        name: path
         type: string
       - description: 排序标记
         in: query
@@ -4425,6 +6035,138 @@ paths:
       summary: 用id查询SysDictionaryDetail
       tags:
       - SysDictionaryDetail
+  /sysDictionaryDetail/getDictionaryDetailsByParent:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 是否包含子级数据
+        in: query
+        name: includeChildren
+        type: boolean
+      - description: 父级字典详情ID，为空时获取顶级
+        in: query
+        name: parentID
+        type: integer
+      - description: 字典ID
+        in: query
+        name: sysDictionaryID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取字典详情列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/system.SysDictionaryDetail'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据父级ID获取字典详情
+      tags:
+      - SysDictionaryDetail
+  /sysDictionaryDetail/getDictionaryPath:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典详情ID
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取字典详情路径
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/system.SysDictionaryDetail'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取字典详情的完整路径
+      tags:
+      - SysDictionaryDetail
+  /sysDictionaryDetail/getDictionaryTreeList:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典ID
+        in: query
+        name: sysDictionaryID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取字典详情树形结构
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/system.SysDictionaryDetail'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取字典详情树形结构
+      tags:
+      - SysDictionaryDetail
+  /sysDictionaryDetail/getDictionaryTreeListByType:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典类型
+        in: query
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取字典详情树形结构
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/system.SysDictionaryDetail'
+                  type: array
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据字典类型获取字典详情树形结构
+      tags:
+      - SysDictionaryDetail
   /sysDictionaryDetail/getSysDictionaryDetailList:
     get:
       consumes:
@@ -4438,6 +6180,10 @@ paths:
         in: query
         name: createdAt
         type: string
+      - description: 禁用状态，根据status字段动态计算
+        in: query
+        name: disabled
+        type: boolean
       - description: 扩展值
         in: query
         name: extend
@@ -4450,6 +6196,10 @@ paths:
         in: query
         name: label
         type: string
+      - description: 层级深度，用于查询指定层级的数据
+        in: query
+        name: level
+        type: integer
       - description: 页码
         in: query
         name: page
@@ -4458,6 +6208,14 @@ paths:
         in: query
         name: pageSize
         type: integer
+      - description: 父级字典详情ID，用于查询指定父级下的子项
+        in: query
+        name: parentID
+        type: integer
+      - description: 层级路径，如 "1,2,3"
+        in: query
+        name: path
+        type: string
       - description: 排序标记
         in: query
         name: sort
@@ -4525,18 +6283,215 @@ paths:
       summary: 更新SysDictionaryDetail
       tags:
       - SysDictionaryDetail
-  /sysExportTemplate/ExportTemplate:
-    get:
+  /sysError/createSysError:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建错误日志
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/system.SysError'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建错误日志
+      tags:
+      - SysError
+  /sysError/deleteSysError:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 删除错误日志
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/system.SysError'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除错误日志
+      tags:
+      - SysError
+  /sysError/deleteSysErrorByIds:
+    delete:
       consumes:
       - application/json
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: 批量删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
       security:
       - ApiKeyAuth: []
-      summary: 导出表格模板
+      summary: 批量删除错误日志
       tags:
-      - SysExportTemplate
+      - SysError
+  /sysError/findSysError:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用id查询错误日志
+        in: query
+        name: ID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/system.SysError'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 用id查询错误日志
+      tags:
+      - SysError
+  /sysError/getSysErrorList:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: createdAtRange
+        type: array
+      - in: query
+        name: form
+        type: string
+      - in: query
+        name: info
+        type: string
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取错误日志列表
+      tags:
+      - SysError
+  /sysError/getSysErrorSolution:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 错误日志ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 处理已提交
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 根据ID触发处理：标记为处理中，1分钟后自动改为处理完成
+      tags:
+      - SysError
+  /sysError/updateSysError:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 更新错误日志
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/system.SysError'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 更新错误日志
+      tags:
+      - SysError
   /sysExportTemplate/createSysExportTemplate:
     post:
       consumes:
@@ -4618,6 +6573,42 @@ paths:
       summary: 导出表格
       tags:
       - SysExportTemplate
+  /sysExportTemplate/exportExcelByToken:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: 导出表格
+      tags:
+      - ExportExcelByToken
+  /sysExportTemplate/exportTemplate:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: 导出表格模板
+      tags:
+      - SysExportTemplate
+  /sysExportTemplate/exportTemplateByToken:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: 通过token导出表格模板
+      tags:
+      - ExportTemplateByToken
   /sysExportTemplate/findSysExportTemplate:
     get:
       consumes:
@@ -4635,6 +6626,10 @@ paths:
         in: query
         name: dbName
         type: string
+      - description: 自定义导入SQL
+        in: query
+        name: importSql
+        type: string
       - in: query
         name: limit
         type: integer
@@ -4644,6 +6639,10 @@ paths:
         type: string
       - in: query
         name: order
+        type: string
+      - description: 自定义导出SQL
+        in: query
+        name: sql
         type: string
       - description: 表名称
         in: query
@@ -4693,6 +6692,10 @@ paths:
       - in: query
         name: endCreatedAt
         type: string
+      - description: 自定义导入SQL
+        in: query
+        name: importSql
+        type: string
       - description: 关键字
         in: query
         name: keyword
@@ -4715,6 +6718,10 @@ paths:
         in: query
         name: pageSize
         type: integer
+      - description: 自定义导出SQL
+        in: query
+        name: sql
+        type: string
       - in: query
         name: startCreatedAt
         type: string
@@ -4758,6 +6765,39 @@ paths:
       summary: 导入表格
       tags:
       - SysImportTemplate
+  /sysExportTemplate/previewSQL:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 导出模板ID
+        in: query
+        name: templateID
+        required: true
+        type: string
+      - description: 查询参数编码字符串，参考 ExportExcel 组件
+        in: query
+        name: params
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 预览最终生成的SQL（不执行查询，仅返回SQL字符串）
+      tags:
+      - SysExportTemplate
   /sysExportTemplate/updateSysExportTemplate:
     put:
       consumes:
@@ -4781,34 +6821,6 @@ paths:
       summary: 更新导出模板
       tags:
       - SysExportTemplate
-  /sysOperationRecord/createSysOperationRecord:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: 创建SysOperationRecord
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/system.SysOperationRecord'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 创建SysOperationRecord
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                msg:
-                  type: string
-              type: object
-      security:
-      - ApiKeyAuth: []
-      summary: 创建SysOperationRecord
-      tags:
-      - SysOperationRecord
   /sysOperationRecord/deleteSysOperationRecord:
     delete:
       consumes:
@@ -5267,6 +7279,238 @@ paths:
       summary: 更新参数
       tags:
       - SysParams
+  /sysVersion/deleteSysVersion:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 删除版本管理
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/system.SysVersion'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除版本管理
+      tags:
+      - SysVersion
+  /sysVersion/deleteSysVersionByIds:
+    delete:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 批量删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除版本管理
+      tags:
+      - SysVersion
+  /sysVersion/downloadVersionJson:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 版本ID
+        in: query
+        name: ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 下载成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 下载版本JSON数据
+      tags:
+      - SysVersion
+  /sysVersion/exportVersion:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 创建发版数据
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ExportVersionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建发版数据
+      tags:
+      - SysVersion
+  /sysVersion/findSysVersion:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用id查询版本管理
+        in: query
+        name: ID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/system.SysVersion'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 用id查询版本管理
+      tags:
+      - SysVersion
+  /sysVersion/getSysVersionList:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: createdAtRange
+        type: array
+      - description: 关键字
+        in: query
+        name: keyword
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: versionCode
+        type: string
+      - in: query
+        name: versionName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PageResult'
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 分页获取版本管理列表
+      tags:
+      - SysVersion
+  /sysVersion/getSysVersionPublic:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: object
+                msg:
+                  type: string
+              type: object
+      summary: 不需要鉴权的版本管理接口
+      tags:
+      - SysVersion
+  /sysVersion/importVersion:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 版本JSON数据
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.ImportVersionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 导入成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                msg:
+                  type: string
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 导入版本数据
+      tags:
+      - SysVersion
   /system/getServerInfo:
     post:
       produces:
@@ -5316,7 +7560,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: 重启系统
+          description: 重载系统
           schema:
             allOf:
             - $ref: '#/definitions/response.Response'
@@ -5326,7 +7570,7 @@ paths:
               type: object
       security:
       - ApiKeyAuth: []
-      summary: 重启系统
+      summary: 重载系统
       tags:
       - System
   /system/setSystemConfig:

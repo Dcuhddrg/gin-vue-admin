@@ -9,7 +9,7 @@
         @keyup.enter="onSubmit"
       >
         <el-form-item label="项目名称" prop="category">
-          <categorySelector
+          <projectSelector
             v-model="searchInfo.category"
             placeholder="请选择项目"
             :auto-select-first="true"
@@ -70,7 +70,7 @@
         </el-button>
         <el-button
           icon="delete"
-          style="margin-left: 10px"
+          class="ml-2.5"
           :disabled="!multipleSelection.length"
           @click="onDelete"
         >
@@ -79,7 +79,7 @@
         <el-button
           type="success"
           icon="refresh"
-          style="margin-left: 10px"
+          class="ml-2.5"
           :loading="updateAllLoading"
           @click="updateAllCertificatesFunc"
         >
@@ -88,7 +88,7 @@
         <el-button
           type="primary"
           icon="edit"
-          style="margin-left: 10px"
+          class="ml-2.5"
           :disabled="!multipleSelection.length"
           @click="onBatchUpdateCategory"
         >
@@ -97,7 +97,7 @@
         <el-button
           type="warning"
           icon="refresh"
-          style="margin-left: 10px"
+          class="ml-2.5"
           :disabled="!multipleSelection.length"
           @click="onBatchReprobe"
         >
@@ -106,7 +106,7 @@
         <el-button
           type="info"
           icon="close"
-          style="margin-left: 10px"
+          class="ml-2.5"
           :disabled="!multipleSelection.length"
           @click="onBatchIgnore"
         >
@@ -116,7 +116,7 @@
 
       <el-table
         ref="multipleTable"
-        style="width: 100%"
+        class="w-full"
         tooltip-effect="dark"
         :data="tableData"
         row-key="ID"
@@ -268,7 +268,7 @@
         label-width="80px"
       >
         <el-form-item label="项目名称:" prop="category">
-          <categorySelector
+          <projectSelector
             v-model="formData.category"
             placeholder="请选择项目"
           />
@@ -286,7 +286,7 @@
     <el-dialog v-model="batchCategoryVisible" title="批量修改项目" width="400px">
       <el-form :model="batchCategoryData" label-width="100px">
         <el-form-item label="项目名称">
-          <categorySelector v-model="batchCategoryData.category" />
+          <projectSelector v-model="batchCategoryData.category" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -310,12 +310,12 @@ import {
   probeCertificate,
   updateAllCertificates
 } from '@/plugin/cert_manager/api/certCertificate'
-import { batchUpdateDomainCategory } from '@/plugin/cert_manager/api/certCategory'
 import {
   batchReprobe,
-  batchIgnore
+  batchIgnore,
+  batchUpdateDomainCategory
 } from '@/plugin/cert_manager/api/certAdvanced'
-import categorySelector from '../components/categorySelector.vue'
+import projectSelector from '@/plugin/project_manager/components/projectSelector.vue'
 import { formatTimeToStr } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'

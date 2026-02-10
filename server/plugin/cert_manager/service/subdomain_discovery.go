@@ -112,7 +112,21 @@ func (s *subdomainDiscovery) ResolveIP(domain string) string {
 }
 
 func (s *subdomainDiscovery) DiscoverAndStoreSubdomains(rootDomain string, category string, deepScan bool) error {
-	// 1. 获取所有子域名
+	// 1. 收集子域名
+	subdomainSet := s.collectSubdomains(rootDomain, deepScan)
+
+	// 2. 排序
+	allDomains := s.sortDomains(subdomainSet)
+
+	// 3. 并发解析 IP
+	ipMap := s.resolveIPsConcurrently(allDomains)
+
+	// 4. 入库
+	return s.syncSubdomainsToDB(rootDomain, category, allDomains, subdomainSet, ipMap)
+}
+
+// Helper 1: Collect Subdomains
+func (s *subdomainDiscovery) collectSubdomains(rootDomain string, deepScan bool) map[string]string {
 	ctSubdomains, _ := s.DiscoverSubdomainsViaCTLog(rootDomain)
 	subdomainSet := make(map[string]string)
 	for _, d := range ctSubdomains {
@@ -128,8 +142,11 @@ func (s *subdomainDiscovery) DiscoverAndStoreSubdomains(rootDomain string, categ
 		}
 	}
 	subdomainSet[rootDomain] = "Input"
+	return subdomainSet
+}
 
-	// 2. 将域名按长度排序（由短到长），确保父域名先处理
+// Helper 2: Sort Domains
+func (s *subdomainDiscovery) sortDomains(subdomainSet map[string]string) []string {
 	allDomains := make([]string, 0, len(subdomainSet))
 	for d := range subdomainSet {
 		allDomains = append(allDomains, d)
@@ -137,17 +154,20 @@ func (s *subdomainDiscovery) DiscoverAndStoreSubdomains(rootDomain string, categ
 	sort.Slice(allDomains, func(i, j int) bool {
 		return len(allDomains[i]) < len(allDomains[j])
 	})
+	return allDomains
+}
 
-	// 3. 并发解析 IP
+// Helper 3: Resolve IPs
+func (s *subdomainDiscovery) resolveIPsConcurrently(domains []string) map[string]string {
 	type result struct {
 		domain string
 		ip     string
 	}
-	resChan := make(chan result, len(allDomains))
+	resChan := make(chan result, len(domains))
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 50)
 
-	for _, d := range allDomains {
+	for _, d := range domains {
 		wg.Add(1)
 		go func(domain string) {
 			defer wg.Done()
@@ -163,78 +183,84 @@ func (s *subdomainDiscovery) DiscoverAndStoreSubdomains(rootDomain string, categ
 	for r := range resChan {
 		ipMap[r.domain] = r.ip
 	}
+	return ipMap
+}
 
-	// 4. 按排序后的顺序入库
-	for _, subdomain := range allDomains {
-		source := subdomainSet[subdomain]
+// Helper 4: Sync to DB
+func (s *subdomainDiscovery) syncSubdomainsToDB(rootDomain, category string, sortedDomains []string, sourceMap, ipMap map[string]string) error {
+	for _, subdomain := range sortedDomains {
+		source := sourceMap[subdomain]
 		ip := ipMap[subdomain]
 
 		var existingAsset model.DomainAsset
 		err := global.GVA_DB.Where("domain = ?", subdomain).First(&existingAsset).Error
 
 		if err != nil {
-			// 新增记录
-			newAsset := model.DomainAsset{
-				Domain:       subdomain,
-				RootDomain:   rootDomain,
-				Category:     category,
-				DomainStatus: 1,
-				CertStatus:   1,
-				IP:           ip,
-				Source:       source,
-			}
-			if ip == "" {
-				newAsset.DomainStatus = 3
-			}
-
-			// 关联父域名
-			if subdomain != rootDomain {
-				parentDomain := extractParentDomain(subdomain, rootDomain)
-				if parentDomain != "" {
-					var parentAsset model.DomainAsset
-					global.GVA_DB.Where("domain = ?", parentDomain).First(&parentAsset)
-					if parentAsset.ID > 0 {
-						pID := parentAsset.ID
-						newAsset.ParentID = &pID
-					}
-				}
-			}
-			global.GVA_DB.Create(&newAsset)
+			s.createDomainAsset(rootDomain, category, subdomain, source, ip)
 		} else {
-			// 更新现有记录
-			updates := make(map[string]interface{})
-			updates["root_domain"] = rootDomain
-			updates["category"] = category
-			if existingAsset.IP != ip {
-				updates["ip"] = ip
-				if ip == "" {
-					updates["domain_status"] = 3
-				} else {
-					updates["domain_status"] = 1
-				}
-			}
-			if existingAsset.Source == "" {
-				updates["source"] = source
-			}
-			// 尝试修复 ParentID (如果之前没关联上)
-			if existingAsset.ParentID == nil && subdomain != rootDomain {
-				parentDomain := extractParentDomain(subdomain, rootDomain)
-				if parentDomain != "" {
-					var parentAsset model.DomainAsset
-					global.GVA_DB.Where("domain = ?", parentDomain).First(&parentAsset)
-					if parentAsset.ID > 0 {
-						pID := parentAsset.ID
-						updates["parent_id"] = &pID
-					}
-				}
-			}
-			if len(updates) > 0 {
-				global.GVA_DB.Model(&existingAsset).Updates(updates)
+			s.updateDomainAsset(existingAsset, rootDomain, category, subdomain, source, ip)
+		}
+	}
+	return nil
+}
+
+func (s *subdomainDiscovery) createDomainAsset(rootDomain, category, subdomain, source, ip string) {
+	newAsset := model.DomainAsset{
+		Domain:       subdomain,
+		RootDomain:   rootDomain,
+		Category:     category,
+		DomainStatus: 1,
+		CertStatus:   1,
+		IP:           ip,
+		Source:       source,
+	}
+	if ip == "" {
+		newAsset.DomainStatus = 3
+	}
+
+	if subdomain != rootDomain {
+		parentDomain := extractParentDomain(subdomain, rootDomain)
+		if parentDomain != "" {
+			var parentAsset model.DomainAsset
+			global.GVA_DB.Where("domain = ?", parentDomain).First(&parentAsset)
+			if parentAsset.ID > 0 {
+				pID := parentAsset.ID
+				newAsset.ParentID = &pID
 			}
 		}
 	}
+	global.GVA_DB.Create(&newAsset)
+}
 
-	return nil
+func (s *subdomainDiscovery) updateDomainAsset(existingAsset model.DomainAsset, rootDomain, category, subdomain, source, ip string) {
+	updates := make(map[string]interface{})
+	updates["root_domain"] = rootDomain
+	updates["category"] = category
+	if existingAsset.IP != ip {
+		updates["ip"] = ip
+		if ip == "" {
+			updates["domain_status"] = 3
+		} else {
+			updates["domain_status"] = 1
+		}
+	}
+	if existingAsset.Source == "" {
+		updates["source"] = source
+	}
+	if existingAsset.ParentID == nil && subdomain != rootDomain {
+		parentDomain := extractParentDomain(subdomain, rootDomain)
+		if parentDomain != "" {
+			var parentAsset model.DomainAsset
+			global.GVA_DB.Where("domain = ?", parentDomain).First(&parentAsset)
+			if parentAsset.ID > 0 {
+				pID := parentAsset.ID
+				updates["parent_id"] = &pID
+			}
+		}
+	}
+	if len(updates) > 0 {
+		global.GVA_DB.Model(&existingAsset).Updates(updates)
+	}
 }
 
 func extractParentDomain(subdomain, rootDomain string) string {

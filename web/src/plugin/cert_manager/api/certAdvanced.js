@@ -72,3 +72,11 @@ export const exportSubdomainReport = (params) => {
     responseType: 'blob'
   })
 }
+
+export const batchUpdateDomainCategory = (data) => {
+  return service({
+    url: '/certCategory/batchUpdateDomainCategory',
+    method: 'post',
+    data
+  })
+}
