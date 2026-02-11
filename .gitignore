@@ -44,3 +44,6 @@ web/pnpm-lock.yaml
 
 # skills
 /.trae/skills/
+.claude/skills/
+# plan
+/server/.trae/

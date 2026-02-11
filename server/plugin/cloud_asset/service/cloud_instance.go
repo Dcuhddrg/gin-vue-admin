@@ -98,9 +98,16 @@ func (s *CloudInstanceService) GetCloudInstanceInfoList(info request.CloudInstan
 	if info.ProviderID > 0 {
 		db = db.Where("provider_id = ?", info.ProviderID)
 	}
-	if info.ProviderType != "" {
+	if info.ProjectID > 0 {
 		db = db.Joins("JOIN gva_cloud_providers ON gva_cloud_providers.id = gva_cloud_instances.provider_id").
-			Where("gva_cloud_providers.type = ?", info.ProviderType)
+			Where("gva_cloud_providers.project_id = ?", info.ProjectID)
+	}
+	if info.ProviderType != "" {
+		// 如果 ProjectID 已经使用了 JOIN，这里需要避免重复 JOIN
+		if info.ProjectID == 0 {
+			db = db.Joins("JOIN gva_cloud_providers ON gva_cloud_providers.id = gva_cloud_instances.provider_id")
+		}
+		db = db.Where("gva_cloud_providers.type = ?", info.ProviderType)
 	}
 	if info.Region != "" {
 		db = db.Where("region = ?", info.Region)

@@ -7,6 +7,7 @@ import (
 // CloudInstanceSearch 云服务器查询请求
 type CloudInstanceSearch struct {
 	ProviderID uint   `json:"providerId" form:"providerId"`
+	ProjectID  uint   `json:"projectId" form:"projectId"`
 	ProviderType string `json:"providerType" form:"providerType"`
 	Region     string `json:"region" form:"region"`
 	InstanceID string `json:"instanceId" form:"instanceId"`

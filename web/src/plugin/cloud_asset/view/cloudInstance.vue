@@ -43,25 +43,35 @@
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form ref="searchForm" :inline="true" :model="searchInfo" class="search-form">
-        <el-form-item label="云厂商">
+        <el-form-item label="关联项目">
           <el-select
-            v-model="searchInfo.providerId"
-            placeholder="请选择云厂商"
+            v-model="searchInfo.projectId"
+            placeholder="请选择项目"
             clearable
             filterable
             class="search-select"
           >
             <el-option
-              v-for="item in providerList"
+              v-for="item in projectList"
               :key="item.ID"
-              :label="`${getProviderLabel(item.type)} - ${item.name || '未命名'}`"
+              :label="item.name"
               :value="item.ID"
-            >
-              <div class="provider-option">
-                <span class="provider-tag" :class="`provider-${item.type}`">{{ getProviderLabel(item.type) }}</span>
-                <span class="provider-name">{{ item.name || '未命名' }}</span>
-              </div>
-            </el-option>
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="云厂商类型">
+          <el-select
+            v-model="searchInfo.providerType"
+            placeholder="请选择类型"
+            clearable
+            class="search-select"
+          >
+            <el-option
+              v-for="item in PROVIDER_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="区域">
@@ -170,7 +180,7 @@
         <el-table-column label="云厂商" width="150">
           <template #default="scope">
             <div class="provider-cell">
-              <el-tag :class="`provider-tag provider-${scope.row.provider?.type || 'default'}`" size="small">
+              <el-tag size="small">
                 {{ getProviderLabel(scope.row.provider?.type) }}
               </el-tag>
               <div v-if="scope.row.provider" class="provider-name">
@@ -525,9 +535,12 @@ import {
   getInstanceStats,
   clearInstanceCache
 } from '@/plugin/cloud_asset/api/cloudInstance.js'
+import { getProjectList } from '@/plugin/project_manager/api/project.js'
+import { PROVIDER_OPTIONS, getProviderLabel } from '@/plugin/cloud_asset/config/provider.js'
+
 import { getCloudProviderList } from '@/plugin/cloud_asset/api/cloudProvider.js'
 
-import { ref, onMounted, watch } from 'vue'
+  import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatTimeToStr } from '@/utils/date'
 
@@ -543,13 +556,15 @@ const pageSize = ref(20)
 const total = ref(0)
 const tableData = ref([])
 const providerList = ref([])
+const projectList = ref([])
 const regionList = ref([])
 const stats = ref(null)
 const lastSyncTime = ref(null)
 
 // 搜索条件
 const searchInfo = ref({
-  providerId: undefined,
+  projectId: undefined,
+  providerType: '',
   region: '',
   status: '',
   instanceName: '',
@@ -570,6 +585,13 @@ const providerRegions = ref([])
 // 实例详情
 const detailDialogVisible = ref(false)
 const currentInstance = ref(null)
+
+const getProjects = async () => {
+  const res = await getProjectList({ page: 1, pageSize: 1000 })
+  if (res.code === 0) {
+    projectList.value = res.data.list
+  }
+}
 
 // 获取云厂商列表
 const getProviders = async () => {
@@ -660,7 +682,8 @@ const onSubmit = () => {
 
 const onReset = () => {
   searchInfo.value = {
-    providerId: undefined,
+    projectId: undefined,
+    providerType: '',
     region: '',
     status: '',
     instanceName: '',
@@ -781,17 +804,6 @@ const deleteInstance = async (row) => {
 }
 
 // 工具函数
-const getProviderLabel = (type) => {
-  const labels = {
-    aliyun: '阿里云',
-    tencent: '腾讯云',
-    aws: 'AWS',
-    huawei: '华为云',
-    baidu: '百度云'
-  }
-  return labels[type] || type
-}
-
 const getStatusClass = (status) => {
   const map = {
     Running: 'running',
@@ -849,6 +861,7 @@ const copyText = (text) => {
 
 // 初始化
 onMounted(() => {
+  getProjects()
   getProviders()
   getActiveProviders()
   getTableData()

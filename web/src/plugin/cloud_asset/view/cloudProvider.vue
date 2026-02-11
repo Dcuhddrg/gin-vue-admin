@@ -14,11 +14,12 @@
         </el-form-item>
         <el-form-item label="厂商类型">
           <el-select v-model="searchInfo.type" placeholder="请选择厂商类型" clearable>
-            <el-option label="阿里云" value="aliyun" />
-            <el-option label="腾讯云" value="tencent" />
-            <el-option label="AWS" value="aws" />
-            <el-option label="华为云" value="huawei" />
-            <el-option label="百度云" value="baidu" />
+            <el-option
+              v-for="item in PROVIDER_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -54,12 +55,7 @@
           prop="type"
         >
           <template #default="scope">
-            <el-tag v-if="scope.row.type === 'aliyun'" type="success">阿里云</el-tag>
-            <el-tag v-else-if="scope.row.type === 'tencent'" type="primary">腾讯云</el-tag>
-            <el-tag v-else-if="scope.row.type === 'aws'" type="warning">AWS</el-tag>
-            <el-tag v-else-if="scope.row.type === 'huawei'" type="danger">华为云</el-tag>
-            <el-tag v-else-if="scope.row.type === 'baidu'" type="info">百度云</el-tag>
-            <el-tag v-else>{{ scope.row.type }}</el-tag>
+            <el-tag>{{ getProviderLabel(scope.row.type) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column
@@ -180,11 +176,12 @@
         </el-form-item>
         <el-form-item label="厂商类型" prop="type">
           <el-select v-model="cloudProviderInfo.type" placeholder="请选择厂商类型" class="w-full">
-            <el-option label="阿里云" value="aliyun" />
-            <el-option label="腾讯云" value="tencent" />
-            <el-option label="AWS" value="aws" />
-            <el-option label="华为云" value="huawei" />
-            <el-option label="百度云" value="baidu" />
+            <el-option
+              v-for="item in PROVIDER_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="AccessKey" prop="ak">
@@ -237,8 +234,9 @@
 </template>
 
 <script setup>
+  import { getCloudProviderList } from '@/plugin/cloud_asset/api/cloudProvider.js'
+  import { PROVIDER_OPTIONS, getProviderLabel } from '@/plugin/cloud_asset/config/provider.js'
   import {
-    getCloudProviderList,
     createCloudProvider,
     updateCloudProvider,
     deleteCloudProvider
