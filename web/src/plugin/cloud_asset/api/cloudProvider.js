@@ -48,3 +48,16 @@ export const getRegions = (data) => {
   })
 }
 
+/**
+ * 获取厂商配置
+ * @param {Object} data
+ * @param {number} data.projectId 项目ID
+ * @param {string} data.providerType 厂商类型
+ */
+export const getProviderConfig = (data) => {
+  return service({
+    url: '/cloudProvider/getProviderConfig',
+    method: 'post',
+    data: data
+  })
+}

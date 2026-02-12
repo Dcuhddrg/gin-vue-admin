@@ -75,7 +75,15 @@
           </el-select>
         </el-form-item>
         <el-form-item label="区域">
-          <el-select v-model="searchInfo.region" placeholder="请选择区域" clearable filterable class="search-select">
+          <el-select
+            v-model="searchInfo.region"
+            placeholder="请选择区域"
+            clearable
+            filterable
+            class="search-select"
+            :loading="configLoading"
+            :disabled="!searchInfo.projectId || !searchInfo.providerType"
+          >
             <el-option
               v-for="region in regionList"
               :key="region"
@@ -177,15 +185,12 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="云厂商" width="150">
+        <el-table-column label="云厂商" width="120">
           <template #default="scope">
             <div class="provider-cell">
-              <el-tag size="small">
-                {{ getProviderLabel(scope.row.provider?.type) }}
+              <el-tag size="small" :class="`provider-tag provider-${scope.row.providerType}`">
+                {{ getProviderLabel(scope.row.providerType) }}
               </el-tag>
-              <div v-if="scope.row.provider" class="provider-name">
-                {{ scope.row.provider.name || '未命名' }}
-              </div>
             </div>
           </template>
         </el-table-column>
@@ -352,28 +357,51 @@
       :close-on-click-modal="false"
     >
       <el-form :model="syncForm" label-width="100px">
-        <el-form-item label="云厂商" required>
+        <el-form-item label="关联项目" required>
           <el-select
-            v-model="syncForm.providerId"
-            placeholder="请选择云厂商"
+            v-model="syncForm.projectId"
+            placeholder="请选择项目"
             filterable
             class="full-width"
           >
             <el-option
-              v-for="item in activeProviderList"
+              v-for="item in projectList"
               :key="item.ID"
-              :label="`${getProviderLabel(item.type)} - ${item.name || '未命名'}`"
+              :label="item.name"
               :value="item.ID"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="区域">
+        <el-form-item label="云厂商类型" required>
+          <el-select
+            v-model="syncForm.providerType"
+            placeholder="请选择类型"
+            filterable
+            class="full-width"
+            :disabled="!syncForm.projectId"
+          >
+            <el-option
+              v-for="item in PROVIDER_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="false" label="同步方式">
+          <el-radio-group v-model="syncForm.syncType">
+            <el-radio value="single">单个区域同步</el-radio>
+            <el-radio value="batch">批量区域同步</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="syncForm.syncType === 'single'" label="区域">
           <el-select
             v-model="syncForm.region"
             placeholder="请选择区域"
             filterable
-            clearable
             class="full-width"
+            disabled
+            :loading="configLoading"
           >
             <el-option
               v-for="region in providerRegions"
@@ -382,20 +410,19 @@
               :value="region"
             />
           </el-select>
+          <div v-if="syncForm.region" class="form-tip">
+            系统自动检测到唯一可用区域，已准备就绪。
+          </div>
         </el-form-item>
-        <el-form-item label="同步方式">
-          <el-radio-group v-model="syncForm.syncType">
-            <el-radio value="single">单个区域同步</el-radio>
-            <el-radio value="batch">批量区域同步</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="syncForm.syncType === 'batch'" label="选择区域">
+        <el-form-item v-if="syncForm.syncType === 'batch'" label="区域">
           <el-select
             v-model="syncForm.regions"
             placeholder="请选择要同步的区域"
             multiple
             filterable
             class="full-width"
+            disabled
+            :loading="configLoading"
           >
             <el-option
               v-for="region in providerRegions"
@@ -404,6 +431,9 @@
               :value="region"
             />
           </el-select>
+          <div v-if="syncForm.regions.length > 0" class="form-tip">
+            系统自动检测到 {{ syncForm.regions.length }} 个可用区域，已自动全选。
+          </div>
         </el-form-item>
         <el-form-item label="强制同步">
           <el-switch v-model="syncForm.forceSync" />
@@ -538,7 +568,7 @@ import {
 import { getProjectList } from '@/plugin/project_manager/api/project.js'
 import { PROVIDER_OPTIONS, getProviderLabel } from '@/plugin/cloud_asset/config/provider.js'
 
-import { getCloudProviderList } from '@/plugin/cloud_asset/api/cloudProvider.js'
+import { getCloudProviderList, getProviderConfig } from '@/plugin/cloud_asset/api/cloudProvider.js'
 
   import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -551,6 +581,7 @@ defineOptions({
 // 数据状态
 const loading = ref(false)
 const syncing = ref(false)
+const configLoading = ref(false)
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
@@ -560,6 +591,7 @@ const projectList = ref([])
 const regionList = ref([])
 const stats = ref(null)
 const lastSyncTime = ref(null)
+const providerConfig = ref(null)
 
 // 搜索条件
 const searchInfo = ref({
@@ -574,6 +606,8 @@ const searchInfo = ref({
 // 同步表单
 const syncDialogVisible = ref(false)
 const syncForm = ref({
+  projectId: undefined,
+  providerType: '',
   providerId: undefined,
   region: '',
   regions: [],
@@ -585,6 +619,9 @@ const providerRegions = ref([])
 // 实例详情
 const detailDialogVisible = ref(false)
 const currentInstance = ref(null)
+
+// 缓存
+const configCache = new Map()
 
 const getProjects = async () => {
   const res = await getProjectList({ page: 1, pageSize: 1000 })
@@ -598,12 +635,6 @@ const getProviders = async () => {
   const res = await getCloudProviderList({ page: 1, pageSize: 1000 })
   if (res.code === 0) {
     providerList.value = res.data.list
-    // 提取区域列表
-    const regions = new Set()
-    res.data.list.forEach(item => {
-      if (item.region) regions.add(item.region)
-    })
-    regionList.value = Array.from(regions)
   }
 }
 
@@ -615,6 +646,114 @@ const getActiveProviders = async () => {
     activeProviderList.value = res.data.list
   }
 }
+
+// 获取厂商配置（核心联动逻辑）
+const fetchProviderConfig = async (projectId, providerType, target = 'search') => {
+  if (!projectId || !providerType) return
+
+  const cacheKey = `${projectId}_${providerType}`
+  if (configCache.has(cacheKey)) {
+    handleConfigSuccess(configCache.get(cacheKey), target)
+    return
+  }
+
+  configLoading.value = true
+  try {
+    const res = await getProviderConfig({ projectId, providerType })
+    if (res.code === 0) {
+      configCache.set(cacheKey, res.data)
+      handleConfigSuccess(res.data, target)
+    }
+  } catch (error) {
+    ElMessage.error('获取厂商配置失败，请检查凭证配置')
+    handleConfigError(target)
+  } finally {
+    configLoading.value = false
+  }
+}
+
+const handleConfigSuccess = (data, target) => {
+  const regions = data.regions.map(r => r.regionId)
+  if (target === 'search') {
+    regionList.value = regions
+  } else if (target === 'sync') {
+    providerRegions.value = regions
+    // 自动判断同步方式
+    if (regions.length > 1) {
+      // 多区域 -> 批量同步
+      syncForm.value.syncType = 'batch'
+      syncForm.value.regions = regions // 全选
+      syncForm.value.region = '' // 清空单选字段
+    } else if (regions.length === 1) {
+      // 单区域 -> 单个同步
+      syncForm.value.syncType = 'single'
+      syncForm.value.region = regions[0] // 选中唯一区域
+      syncForm.value.regions = [] // 清空多选字段
+    } else {
+      // 无区域
+      syncForm.value.syncType = 'single'
+      syncForm.value.region = ''
+      syncForm.value.regions = []
+    }
+  }
+  providerConfig.value = data
+}
+
+const handleConfigError = (target) => {
+  if (target === 'search') {
+    regionList.value = []
+    searchInfo.value.region = ''
+  } else if (target === 'sync') {
+    providerRegions.value = []
+    syncForm.value.region = ''
+  }
+}
+
+// 监听搜索表单联动
+watch(
+  [() => searchInfo.value.projectId, () => searchInfo.value.providerType],
+  ([newPid, newType]) => {
+    if (newPid && newType) {
+      fetchProviderConfig(newPid, newType, 'search')
+    } else {
+      regionList.value = []
+      searchInfo.value.region = ''
+    }
+  }
+)
+
+// 监听同步表单项目和类型变化，自动设置ProviderID
+watch(
+  [() => syncForm.value.projectId, () => syncForm.value.providerType],
+  ([newPid, newType]) => {
+    if (newPid && newType) {
+      const provider = activeProviderList.value.find(p => p.projectId === newPid && p.type === newType)
+      if (provider) {
+        syncForm.value.providerId = provider.ID
+      } else {
+        syncForm.value.providerId = undefined
+        if (newPid && newType) {
+          ElMessage.warning('该项目下未配置对应的云厂商凭证')
+        }
+      }
+    } else {
+      syncForm.value.providerId = undefined
+    }
+  }
+)
+
+// 监听同步表单联动（需要根据选择的厂商ID反查项目ID和类型）
+watch(() => syncForm.value.providerId, (newVal) => {
+  if (newVal) {
+    const provider = activeProviderList.value.find(p => p.ID === newVal)
+    if (provider) {
+      fetchProviderConfig(provider.projectId, provider.type, 'sync')
+    }
+  } else {
+    providerRegions.value = []
+    syncForm.value.region = ''
+  }
+})
 
 // 获取统计数据
 const getStats = async () => {
@@ -723,6 +862,8 @@ const clearCache = async () => {
 // 打开同步对话框
 const openSyncDialog = () => {
   syncForm.value = {
+    projectId: undefined,
+    providerType: '',
     providerId: undefined,
     region: '',
     regions: [],
@@ -735,7 +876,7 @@ const openSyncDialog = () => {
 // 同步实例
 const handleSync = async () => {
   if (!syncForm.value.providerId) {
-    ElMessage.warning('请选择云厂商')
+    ElMessage.warning('请选择有效的项目和云厂商类型')
     return
   }
 

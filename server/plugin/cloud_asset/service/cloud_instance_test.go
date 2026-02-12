@@ -403,6 +403,10 @@ func TestCloudInstanceService_ClearCache(t *testing.T) {
 func TestCloudInstanceService_SyncInstances_InvalidProvider(t *testing.T) {
 	service := &CloudInstanceService{}
 
+	if global.GVA_DB == nil {
+		t.Skip("数据库连接未初始化")
+	}
+
 	ctx := context.Background()
 	req := request.SyncInstancesReq{
 		ProviderID: 99999, // 不存在的云厂商ID
@@ -416,6 +420,81 @@ func TestCloudInstanceService_SyncInstances_InvalidProvider(t *testing.T) {
 
 	if err.Error() != "云厂商不存在" {
 		t.Errorf("期望错误消息='云厂商不存在'，实际='%s'", err.Error())
+	}
+}
+
+// TestCloudInstanceService_GetCloudInstanceVOList 测试获取实例视图列表
+func TestCloudInstanceService_GetCloudInstanceVOList(t *testing.T) {
+	service := &CloudInstanceService{}
+	providerService := &CloudProviderService{}
+
+	if global.GVA_DB == nil {
+		t.Skip("数据库连接未初始化")
+	}
+
+	// 1. 创建测试云厂商
+	testProvider := model.CloudProvider{
+		Remark:    "测试厂商VO",
+		Type:      "aliyun",
+		ProjectID: 1,
+		Status:    func() *int { i := 1; return &i }(),
+	}
+	if err := providerService.CreateCloudProvider(testProvider); err != nil {
+		t.Fatalf("创建测试云厂商失败: %v", err)
+	}
+	// 获取创建后的 Provider 以拿到 ID
+	var createdProvider model.CloudProvider
+	global.GVA_DB.Where("remark = ?", testProvider.Remark).First(&createdProvider)
+	defer providerService.DeleteCloudProvider(createdProvider)
+
+	// 2. 创建测试实例
+	testInstance := model.CloudInstance{
+		InstanceID:   "test-vo-001",
+		InstanceName: "测试VO实例",
+		ProviderID:   createdProvider.ID,
+		Region:       "cn-hangzhou",
+		Status:       "running",
+	}
+	if err := service.CreateCloudInstance(testInstance); err != nil {
+		t.Fatalf("创建测试实例失败: %v", err)
+	}
+	defer global.GVA_DB.Where("instance_id = ?", testInstance.InstanceID).Delete(&model.CloudInstance{})
+
+	// 3. 调用 GetCloudInstanceVOList
+	search := request.CloudInstanceSearch{
+		PageInfo: commonRequest.PageInfo{
+			Page:     1,
+			PageSize: 10,
+		},
+		InstanceID: "test-vo-001",
+	}
+
+	list, total, err := service.GetCloudInstanceVOList(search)
+	if err != nil {
+		t.Errorf("获取实例视图列表失败: %v", err)
+	}
+
+	if total != 1 {
+		t.Errorf("期望返回1条记录，实际%d条", total)
+	}
+
+	if len(list) != 1 {
+		t.Fatalf("列表长度不正确")
+	}
+
+	vo := list[0]
+
+	// 4. 验证 ProviderType 和 ProviderName 映射
+	if vo.ProviderType != "aliyun" {
+		t.Errorf("期望ProviderType='aliyun'，实际='%s'", vo.ProviderType)
+	}
+
+	if vo.ProviderName != "测试厂商VO" {
+		t.Errorf("期望ProviderName='测试厂商VO'，实际='%s'", vo.ProviderName)
+	}
+
+	if vo.InstanceID != "test-vo-001" {
+		t.Errorf("期望InstanceID='test-vo-001'，实际='%s'", vo.InstanceID)
 	}
 }
 

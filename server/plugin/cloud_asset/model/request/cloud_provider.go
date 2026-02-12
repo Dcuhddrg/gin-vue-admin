@@ -16,3 +16,8 @@ type GetRegionsReq struct {
 	AccessKey string `json:"accessKey" binding:"required"`
 	SecretKey string `json:"secretKey" binding:"required"`
 }
+
+type GetProviderConfigReq struct {
+	ProjectId    uint   `json:"projectId" binding:"required"`
+	ProviderType string `json:"providerType" binding:"required"`
+}

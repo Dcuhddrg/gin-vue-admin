@@ -21,5 +21,6 @@ func (s *CloudProviderRouter) InitCloudProviderRouter(Router *gin.RouterGroup) {
 	{
 		cpRouterWithoutRecord.GET("findCloudProvider", cpApi.FindCloudProvider)        // 根据ID获取云厂商
 		cpRouterWithoutRecord.POST("getCloudProviderList", cpApi.GetCloudProviderList) // 获取云厂商列表
+		cpRouterWithoutRecord.POST("getProviderConfig", cpApi.GetProviderConfig)       // 获取厂商配置
 	}
 }

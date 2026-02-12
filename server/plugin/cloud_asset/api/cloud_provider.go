@@ -181,3 +181,30 @@ func (a *CloudProviderApi) GetRegions(c *gin.Context) {
 
 	response.OkWithDetailed(regions, "获取成功", c)
 }
+
+// GetProviderConfig 获取厂商配置
+// @Tags     CloudProvider
+// @Summary  获取厂商配置
+// @Security ApiKeyAuth
+// @accept   application/json
+// @Produce  application/json
+// @Param    data body request.GetProviderConfigReq true "获取配置参数"
+// @Success  200  {object} response.Response{data=response.ProviderConfigResponse,msg=string} "获取成功"
+// @Router   /cloudProvider/getProviderConfig [post]
+func (a *CloudProviderApi) GetProviderConfig(c *gin.Context) {
+	var req request.GetProviderConfigReq
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	config, err := cpService.GetProviderConfig(req.ProjectId, req.ProviderType)
+	if err != nil {
+		global.GVA_LOG.Error("获取厂商配置失败", zap.Error(err))
+		response.FailWithMessage("获取配置失败: "+err.Error(), c)
+		return
+	}
+
+	response.OkWithDetailed(config, "获取成功", c)
+}
