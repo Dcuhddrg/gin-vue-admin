@@ -16,7 +16,8 @@ func Menu(ctx context.Context) {
 		Sort:      10,
 		Meta:      model.Meta{Title: "云资产管理", Icon: "cloudy"},
 	}
-	child := model.SysBaseMenu{
+	// 云厂商菜单
+	cloudProvider := model.SysBaseMenu{
 		Path:      "cloudProvider",
 		Name:      "cloudProvider",
 		Hidden:    false,
@@ -24,5 +25,16 @@ func Menu(ctx context.Context) {
 		Sort:      1,
 		Meta:      model.Meta{Title: "云厂商", Icon: "box"},
 	}
-	utils.RegisterMenus(parent, child)
+
+	// 云服务器实例菜单
+	cloudInstance := model.SysBaseMenu{
+		Path:      "cloudInstance",
+		Name:      "cloudInstance",
+		Hidden:    false,
+		Component: "plugin/cloud_asset/view/cloudInstance.vue",
+		Sort:      2,
+		Meta:      model.Meta{Title: "云服务器实例", Icon: "server"},
+	}
+
+	utils.RegisterMenus(parent, cloudProvider, cloudInstance)
 }

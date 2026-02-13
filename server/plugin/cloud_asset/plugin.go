@@ -16,6 +16,7 @@ type plugin struct{}
 
 func (p *plugin) Register(group *gin.Engine) {
 	ctx := context.Background()
+	initialize.Viper(ctx)
 	initialize.Api(ctx)
 	initialize.Menu(ctx)
 	initialize.Gorm(ctx)

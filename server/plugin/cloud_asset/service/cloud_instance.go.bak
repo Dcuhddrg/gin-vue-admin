@@ -40,6 +40,7 @@ type syncCache struct {
 
 var (
 	instanceCache sync.Map // key: providerID_region, value: *syncCache
+	cacheLock     sync.RWMutex
 )
 
 // CreateCloudInstance 创建云服务器实例（手动录入）
@@ -154,23 +155,23 @@ func (s *CloudInstanceService) GetCloudInstanceVOList(info request.CloudInstance
 	voList := make([]model.InstanceVO, 0, len(instances))
 	for _, inst := range instances {
 		vo := model.InstanceVO{
-			ID:           inst.ID,
-			InstanceID:   inst.InstanceID,
-			InstanceName: inst.InstanceName,
-			ProviderName: inst.Provider.Remark,
-			ProviderType: inst.Provider.Type,
-			Region:       inst.Region,
-			InstanceType: inst.InstanceType,
-			CPU:          inst.CPU,
-			Memory:       inst.Memory,
-			OSName:       inst.OSName,
-			PublicIP:     inst.PublicIP,
-			PrivateIP:    inst.PrivateIP,
-			Status:       inst.Status,
-			CreatedTime:  inst.CreatedTime,
-			ExpiredTime:  inst.ExpiredTime,
-			ChargeType:   inst.ChargeType,
-			LastSyncAt:   inst.LastSyncAt,
+			ID:             inst.ID,
+			InstanceID:     inst.InstanceID,
+			InstanceName:   inst.InstanceName,
+			ProviderName:   inst.Provider.Remark,
+			ProviderType:   inst.Provider.Type,
+			Region:         inst.Region,
+			InstanceType:   inst.InstanceType,
+			CPU:            inst.CPU,
+			Memory:         inst.Memory,
+			OSName:         inst.OSName,
+			PublicIP:       inst.PublicIP,
+			PrivateIP:      inst.PrivateIP,
+			Status:         inst.Status,
+			CreatedTime:    inst.CreatedTime,
+			ExpiredTime:    inst.ExpiredTime,
+			ChargeType:     inst.ChargeType,
+			LastSyncAt:     inst.LastSyncAt,
 		}
 		voList = append(voList, vo)
 	}
@@ -198,12 +199,16 @@ func (s *CloudInstanceService) SyncInstances(ctx context.Context, req request.Sy
 
 	// 检查缓存（非强制同步时）
 	if !req.ForceSync {
+		cacheLock.RLock()
 		if cached, ok := instanceCache.Load(cacheKey); ok {
 			cache := cached.(*syncCache)
+			cacheLock.RUnlock()
 			if time.Now().Before(cache.expiredAt) {
 				// 缓存有效，直接返回缓存数据
 				return s.updateInstancesFromCache(cache.data, req.ProviderID, req.Region)
 			}
+		} else {
+			cacheLock.RUnlock()
 		}
 	}
 
@@ -235,10 +240,12 @@ func (s *CloudInstanceService) SyncInstances(ctx context.Context, req request.Sy
 	}
 
 	// 更新缓存
+	cacheLock.Lock()
 	instanceCache.Store(cacheKey, &syncCache{
 		data:      instances,
 		expiredAt: time.Now().Add(cacheExpireTime),
 	})
+	cacheLock.Unlock()
 
 	// 记录同步成功状态
 	_ = s.updateSyncStatus(req.ProviderID, req.Region, "success")
@@ -425,12 +432,12 @@ func (s *CloudInstanceService) convertAliyunInstance(aliInst ecs.Instance) model
 // mapAliyunStatus 映射阿里云状态
 func (s *CloudInstanceService) mapAliyunStatus(status string) string {
 	statusMap := map[string]string{
-		"Running":  "running",
-		"Starting": "starting",
-		"Stopping": "stopping",
-		"Stopped":  "stopped",
-		"Pending":  "pending",
-		"Deleting": "deleting",
+		"Running":   "running",
+		"Starting":  "starting",
+		"Stopping":  "stopping",
+		"Stopped":   "stopped",
+		"Pending":   "pending",
+		"Deleting":  "deleting",
 	}
 	if mapped, ok := statusMap[status]; ok {
 		return mapped

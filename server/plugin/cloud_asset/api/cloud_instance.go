@@ -130,13 +130,15 @@ func (a *CloudInstanceApi) UpdateCloudInstance(c *gin.Context) {
 // @Success  200  {object} response.Response{data=model.CloudInstance,msg=string} "查询成功"
 // @Router   /cloudInstance/findCloudInstance [get]
 func (a *CloudInstanceApi) FindCloudInstance(c *gin.Context) {
-	var instance model.CloudInstance
-	err := c.ShouldBindQuery(&instance)
+	var req struct {
+		ID uint `form:"ID" json:"ID"`
+	}
+	err := c.ShouldBindQuery(&req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	reinstance, err := instanceService.GetCloudInstance(instance.ID)
+	reinstance, err := instanceService.GetCloudInstance(req.ID)
 	if err != nil {
 		global.GVA_LOG.Error("查询云服务器实例失败!", zap.Error(err))
 		response.FailWithMessage("查询云服务器实例失败", c)

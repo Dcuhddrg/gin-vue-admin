@@ -16,11 +16,11 @@ func (s *CloudProviderRouter) InitCloudProviderRouter(Router *gin.RouterGroup) {
 		cpRouter.POST("createCloudProvider", cpApi.CreateCloudProvider)   // 新建云厂商
 		cpRouter.DELETE("deleteCloudProvider", cpApi.DeleteCloudProvider) // 删除云厂商
 		cpRouter.PUT("updateCloudProvider", cpApi.UpdateCloudProvider)    // 更新云厂商
+		cpRouter.POST("getRegions", cpApi.GetRegions)                     // 获取可用区
 	}
 	{
 		cpRouterWithoutRecord.GET("findCloudProvider", cpApi.FindCloudProvider)        // 根据ID获取云厂商
 		cpRouterWithoutRecord.POST("getCloudProviderList", cpApi.GetCloudProviderList) // 获取云厂商列表
 		cpRouterWithoutRecord.POST("getProviderConfig", cpApi.GetProviderConfig)       // 获取厂商配置
-		cpRouterWithoutRecord.POST("getRegions", cpApi.GetRegions)                     // 获取可用区
 	}
 }

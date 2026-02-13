@@ -51,12 +51,10 @@ export const getCloudInstanceVOList = (data) => {
  * @returns {Promise} 云服务器实例详情
  */
 export const getCloudInstanceById = (data) => {
-  // 后端需要使用大写的 ID 参数
-  const params = { ID: data.id }
   return service({
     url: '/cloudInstance/findCloudInstance',
     method: 'get',
-    params: params
+    params: { ID: data.id }
   })
 }
 

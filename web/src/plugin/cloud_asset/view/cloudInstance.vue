@@ -1008,19 +1008,6 @@ onMounted(() => {
   getTableData()
   getStats()
 })
-
-// 监听云厂商选择变化
-watch(() => syncForm.value.providerId, (newVal) => {
-  if (newVal) {
-    providerRegions.value = getProviderRegions(newVal)
-    // 设置默认区域
-    if (providerRegions.value.length === 1) {
-      syncForm.value.region = providerRegions.value[0]
-    }
-  } else {
-    providerRegions.value = []
-  }
-})
 </script>
 
 <style lang="scss" scoped>
